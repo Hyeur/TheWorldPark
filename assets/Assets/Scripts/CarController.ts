@@ -32,10 +32,7 @@ export class CarController extends Component {
 
     ////////////////bonus//////////////////
     protected _bonusSpeedRatio: number = 1.2;
-    protected _bonusSpeedDurationInSeconds: number = 3;
     protected _magnetRadius: number = 100;
-    protected _magnetDurationInSeconds: number = 5;
-    protected _immortalDurationInSeconds: number = 5;
     ////////////////////////////////////////
     protected get isDead(): boolean {
         return this._isDead;
@@ -63,6 +60,11 @@ export class CarController extends Component {
         this.node.setPosition(new Vec3(posWP.x, posWP.y, 0));
     }
 
+    private skillDurations: Map<Skill, number> = new Map([
+        [Skill.BonusSpeed, 0],
+        [Skill.Magnet, 0],
+        [Skill.Immortal, 0]
+    ]);
 
     isPlayerDie(): boolean {
         return this.isDead;
@@ -132,22 +134,30 @@ export class CarController extends Component {
         if (this.isPlayerDie()) return;
         if (!direction) direction = this._curDirection;
 
+        //normal speed
         let curSpeed = this._curSpeed;
         if (speed) curSpeed = speed;
 
-        if (this._bonusSpeedRatio > 1 && this._bonusSpeedDurationInSeconds > 0) {
+        //bonus speed
+        if (this.IsSkillConnected(Skill.BonusSpeed)) {
             curSpeed *= this._bonusSpeedRatio;
         }
+
+        //magnet
+
+        //immortal
+
+        //car visual
         this.updateVisual(direction);
+
+        //car move
         const posWS = this.node.getPosition();
-
         let moveDelta = new Vec2(direction.x, direction.y).multiplyScalar(curSpeed * deltaTime);
-
-        // console.log(curSpeed);
+        //console.log(curSpeed);
         this.node.setPosition(posWS.add(new Vec3(moveDelta.x, moveDelta.y, 0)));
     }
 
-    public applySkill(skill: Skill): void {
+    public connectSkill(skill: Skill, apply: boolean = true): void {
         if (!this.isLocalPlayer || !this.skillManager) return;
 
         const preset = this.skillManager.getSkillPreset(skill);
@@ -155,22 +165,36 @@ export class CarController extends Component {
 
         switch (skill) {
             case Skill.BonusSpeed:
-                this.SetBonusSpeed(preset.ratio, preset.duration);
+                if (apply) {
+                    this.SetBonusSpeed(preset.ratio, preset.duration);
+                } else {
+                    console.log("BonusSpeed disconnected");
+                    this.SetBonusSpeed(1, 0);
+                }
                 break;
+
             case Skill.Magnet:
-                this.SetMagnet(preset.radius, preset.duration);
+                if (apply) {
+                    this.SetMagnet(preset.radius, preset.duration);
+                } else {
+                    this.SetMagnet(0, 0);
+                }
                 break;
             case Skill.Immortal:
-                this.SetImmortal(preset.duration);
+                if (apply) {
+                    this.SetImmortal(preset.duration);
+                } else {
+                    this.SetImmortal(0);
+                }
                 break;
         }
-
-        this.skillManager.activateSkill(skill);
     }
+
 
     update(deltaTime: number) {
         if (this.isLocalPlayer) {
             this.updateLocalPlayerMovement(deltaTime);
+            this.updateSkillDurations(deltaTime);
         }
     }
 
@@ -213,16 +237,16 @@ export class CarController extends Component {
 
     SetBonusSpeed(bonusSpeedRatio: number, bonusSpeedDurationInSeconds: number): void {
         this._bonusSpeedRatio = bonusSpeedRatio;
-        this._bonusSpeedDurationInSeconds = bonusSpeedDurationInSeconds;
+        this.skillDurations.set(Skill.BonusSpeed, bonusSpeedDurationInSeconds);
     }
 
     SetMagnet(magnetRadius: number, magnetDurationInSeconds: number): void {
         this._magnetRadius = magnetRadius;
-        this._magnetDurationInSeconds = magnetDurationInSeconds;
+        this.skillDurations.set(Skill.Magnet, magnetDurationInSeconds);
     }
 
     SetImmortal(immortalDurationInSeconds: number): void {
-        this._immortalDurationInSeconds = immortalDurationInSeconds;
+        this.skillDurations.set(Skill.Immortal, immortalDurationInSeconds);
     }
 
     onDestroy() {
@@ -234,5 +258,22 @@ export class CarController extends Component {
     private removeInputListeners() {
         input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
+    }
+
+    public getSkillRemainingDurations(skill: Skill): number {
+        return this.skillDurations.get(skill) || 0;
+    }
+
+    private updateSkillDurations(deltaTime: number) {
+        this.skillDurations.forEach((duration, skill) => {
+            if (duration > 0 && this.IsSkillConnected(skill)) {
+                this.skillDurations.set(skill, duration - deltaTime);
+            }
+
+        });
+    }
+
+    private IsSkillConnected(skill: Skill): boolean {
+        return SkillManager.instance.GetisSkillConnected(skill);
     }
 }

@@ -1,17 +1,15 @@
-import { _decorator, Component, Node, Sprite, Color, Button, UIOpacity, sys } from 'cc';
+import { _decorator, Component, Node, Button, UIOpacity } from 'cc';
 import { CarController } from './CarController';
 import { GameManager } from './GameManager';
 
-const { ccclass, property } = _decorator;
+const { ccclass, property, requireComponent, executionOrder } = _decorator;
 
-export enum Skill {
-    BonusSpeed,
-    Magnet,
-    Immortal
-}
+export enum Skill { BonusSpeed, Magnet, Immortal }
+
+enum SkillStateEnum { Invalid, Idle, Active, Cooldown }
 
 interface SkillState {
-    isAvailable: boolean;
+    state: SkillStateEnum;
     cooldownProgress: number;
     uiNode: Node | null;
 }
@@ -24,9 +22,11 @@ interface SkillPresetProperties {
 }
 
 @ccclass('SkillManager')
+@requireComponent(GameManager)
+@executionOrder(1)
 export class SkillManager extends Component {
+    // Singleton setup
     private static _instance: SkillManager | null = null;
-
     public static get instance(): SkillManager {
         if (!this._instance) {
             const node = new Node('SkillManager');
@@ -35,14 +35,7 @@ export class SkillManager extends Component {
         return this._instance;
     }
 
-    onLoad() {
-        if (SkillManager._instance) {
-            this.node.destroy();
-        } else {
-            SkillManager._instance = this;
-        }
-    }
-
+    // Properties
     @property bonusSpeedRatio: number = 1.5;
     @property bonusSpeedDurationInSeconds: number = 5;
     @property bonusSpeedCooldownInSeconds: number = 8;
@@ -56,10 +49,42 @@ export class SkillManager extends Component {
     @property(Node) immortalUI: Node | null = null;
 
     private skillStates: Map<Skill, SkillState> = new Map();
+    private playerController: CarController | null = null;
+
+    // Lifecycle methods
+    onLoad() {
+        if (SkillManager._instance) {
+            this.node.destroy();
+        } else {
+            SkillManager._instance = this;
+        }
+    }
 
     start() {
+        // Ensure GameManager is initialized
+        const gameManager = GameManager.instance;
+        if (!gameManager) {
+            console.error('GameManager not found. SkillManager requires GameManager to be present.');
+            return;
+        }
+
+        this.playerController = gameManager.playerCarController;
         this.initializeSkillStates();
         this.setupSkillButtons();
+        this.initializeSkillData();
+    }
+
+    protected update(dt: number): void {
+
+        this.updateSkills(dt);
+    }
+
+    // Initialization methods
+    private initializeSkillStates() {
+        const defaultState = { state: SkillStateEnum.Idle, cooldownProgress: 0 };
+        this.skillStates.set(Skill.BonusSpeed, { ...defaultState, uiNode: this.bonusSpeedUI });
+        this.skillStates.set(Skill.Magnet, { ...defaultState, uiNode: this.magnetUI });
+        this.skillStates.set(Skill.Immortal, { ...defaultState, uiNode: this.immortalUI });
     }
 
     private setupSkillButtons() {
@@ -75,12 +100,75 @@ export class SkillManager extends Component {
         }
     }
 
-    private initializeSkillStates() {
-        this.skillStates.set(Skill.BonusSpeed, { isAvailable: true, cooldownProgress: 0, uiNode: this.bonusSpeedUI });
-        this.skillStates.set(Skill.Magnet, { isAvailable: true, cooldownProgress: 0, uiNode: this.magnetUI });
-        this.skillStates.set(Skill.Immortal, { isAvailable: true, cooldownProgress: 0, uiNode: this.immortalUI });
+    // Skill management methods
+    public activateSkill(skill: Skill) {
+        const preset = this.getSkillPreset(skill);
+        const state = this.skillStates.get(skill);
+        if (!preset || state?.state !== (SkillStateEnum.Idle)) return;
+
+        if (this.playerController) {
+            state.state = SkillStateEnum.Active;
+        }
     }
 
+    private updateSkills(dt: number) {
+        this.skillStates.forEach((state, skill) => {
+            this.updateSkillByState(skill, dt);
+            if (skill === Skill.BonusSpeed) {
+                console.log("Skill State: ", state.state, "Cooldown Progress: ", state.cooldownProgress);
+            }
+        });
+
+    }
+
+
+    private updateSkillByState(skill: Skill, dt: number) {
+        const state = this.skillStates.get(skill);
+        if (!state) return;
+
+        switch (state.state) {
+            case SkillStateEnum.Invalid:
+                break;
+            case SkillStateEnum.Idle:
+                break;
+            case SkillStateEnum.Active:
+                state.cooldownProgress = this.getSkillPreset(skill)?.cooldown ?? 0;
+                this.playerController.connectSkill(skill);
+                console.log("Skill connected: ", skill);
+                state.state = SkillStateEnum.Cooldown;
+                break;
+            case SkillStateEnum.Cooldown:
+                this.checkDisconnectedSkill(skill);
+                if (state.cooldownProgress > 0) {
+                    state.cooldownProgress -= dt;
+                }
+                else{
+                    state.state = SkillStateEnum.Idle;
+                    this.reActivateSkill(skill);
+                    console.log("Skill ready: ", skill);
+                }
+                break;
+        }
+        this.updateSkillUI(skill);
+    }
+
+    private updateSkillUI(skill: Skill) {
+        const state = this.skillStates.get(skill);
+        if (!state?.uiNode) return;
+
+        const uiOpacity = [
+            state.uiNode.getComponent(UIOpacity),
+            ...state.uiNode.children.map(child => child.getComponent(UIOpacity))
+        ].filter(Boolean);
+
+        const alpha = state.state == SkillStateEnum.Idle ? 255 : 100;
+
+        const progress = state.cooldownProgress / (this.getSkillPreset(skill)?.cooldown ?? 1);
+        const fillAmount = Math.max(0, Math.min(1, progress));
+        uiOpacity.forEach(ui => ui.opacity = alpha);
+    }
+
+    // Utility methods
     public getSkillPreset(skill: Skill): SkillPresetProperties | null {
         const presets: { [key in Skill]: SkillPresetProperties } = {
             [Skill.BonusSpeed]: {
@@ -102,56 +190,14 @@ export class SkillManager extends Component {
         return presets[skill] || null;
     }
 
-    public activateSkill(skill: Skill) {
-        const preset = this.getSkillPreset(skill);
-        const state = this.skillStates.get(skill);
-        if (!preset || !state?.isAvailable) return;
-
-        const playerController = GameManager.instance.playerCarController;
-        if (playerController) {
-            playerController.applySkill(skill);
-            state.isAvailable = false;
-            state.cooldownProgress = preset.cooldown;
-            this.updateSkillUI(skill);
-        }
+    public GetisSkillActivating(skill: Skill): boolean {
+        return this.skillStates.get(skill)?.state === SkillStateEnum.Cooldown || false;
     }
 
-    public updateSkills(dt: number) {
-        this.skillStates.forEach((state, skill) => {
-            if (!state.isAvailable) {
-                state.cooldownProgress -= dt;
-                if (state.cooldownProgress <= 0) {
-                    this.reActivateSkill(skill);
-                }
-                this.updateSkillUI(skill);
-            }
-        });
-    }
 
-    private updateSkillUI(skill: Skill) {
-        const state = this.skillStates.get(skill);
-        if (!state?.uiNode) return;
 
-        const uiOpacity = state.uiNode.children
-            .map(child => child.getComponent(UIOpacity))
-            .filter(Boolean);
-
-        const active = state.isAvailable;
-
-        state.uiNode.active = active;
-        const alpha = active ? 255 : 102;
-        const progress = state.cooldownProgress / (this.getSkillPreset(skill)?.cooldown ?? 1);
-
-        const fillAmount = Math.max(0, Math.min(1, progress));
-        uiOpacity.forEach(ui => ui.opacity = alpha);
-    }
-
-    protected update(dt: number): void {
-        this.updateSkills(dt);
-    }
-
-    public isSkillActivating(skill: Skill): boolean {
-        return !this.skillStates.get(skill)?.isAvailable || false;
+    public GetisSkillConnected(skill: Skill): boolean {
+        return this.skillStates.get(skill)?.state === SkillStateEnum.Cooldown || false;
     }
 
     public getSkillCooldown(skill: Skill): number {
@@ -161,13 +207,26 @@ export class SkillManager extends Component {
     public reActivateSkill(skill: Skill) {
         const state = this.skillStates.get(skill);
         if (state) {
-            state.isAvailable = true;
             state.cooldownProgress = this.getSkillPreset(skill)?.cooldown ?? 0;
-            this.updateSkillUI(skill);
+            console.log("Skill re-generated: ", skill);
         }
     }
+
+    public initializeSkillData() {
+        this.skillStates.forEach((state, skill) => {
+            this.reActivateSkill(skill);
+        });
+    }
+
+
+    private checkDisconnectedSkill(skill: Skill, isDisconnected?: boolean) {
+
+        const state = this.skillStates.get(skill);
+        if (this.playerController && this.playerController.getSkillRemainingDurations(skill) <= 0) {
+            this.playerController.connectSkill(skill, false);
+            console.log("Skill disconnected: ", skill);
+            return isDisconnected = true;
+        }
+        return isDisconnected = false;
+    }
 }
-
-
-
-

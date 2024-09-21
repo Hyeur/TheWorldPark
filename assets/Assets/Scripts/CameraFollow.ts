@@ -1,9 +1,10 @@
-import { _decorator, Component, Node, Vec3, Camera, CCFloat } from 'cc';
+import { _decorator, Component, Node, Vec3, Camera, CCFloat, Vec2 } from 'cc';
 import { CarController } from './CarController';
 import { GameManager } from './GameManager'; // Add this import
-const { ccclass, property } = _decorator;
+const { ccclass, property, executionOrder} = _decorator;
 
 @ccclass('FollowPlayer')
+@executionOrder(2)
 export class CameraFollow extends Component {
     @property(Node)
     playerCar: Node | null = null;
@@ -17,10 +18,14 @@ export class CameraFollow extends Component {
     @property(CCFloat)
     cameraSmoothing: number = 0.1;
 
+    @property(Vec2)
+    backgroundSize: Vec2 = new Vec2(0, 0);
     start() {
         this.initializeCamera();
-        this.findPlayerCar();
+
+        this.playerCar = GameManager.instance.playerCarController.node;
     }
+
 
     private initializeCamera() {
         if (!this.mainCamera) {
@@ -28,17 +33,6 @@ export class CameraFollow extends Component {
         }
     }
 
-    private findPlayerCar() {
-        if (!this.playerCar) {
-            const playerController = GameManager.instance.playerCarController;
-            if (playerController) {
-                this.playerCar = playerController.node;
-                console.log("Local player car found and set as target for camera.");
-            } else {
-                console.warn("No local player car found in the scene.");
-            }
-        }
-    }
 
     update(deltaTime: number) {
         this.updateCameraPosition(deltaTime);
@@ -48,11 +42,21 @@ export class CameraFollow extends Component {
         if (!this.playerCar || !this.mainCamera) return;
 
         const targetPosition = this.playerCar.worldPosition.clone().add(this.cameraOffset);
+        if (this.backgroundSize > Vec2.ZERO) {
+            if (targetPosition.x < -this.backgroundSize.x / 2 && targetPosition.x > this.backgroundSize.x / 2) {
+                return;
+            }
+            if (targetPosition.y < -this.backgroundSize.y / 2 && targetPosition.y > this.backgroundSize.y / 2) {
+                return;
+            }
+        }
         const newPosition = new Vec3(
+
             this.lerp(this.mainCamera.worldPosition.x, targetPosition.x, this.cameraSmoothing),
             this.lerp(this.mainCamera.worldPosition.y, targetPosition.y, this.cameraSmoothing),
             this.mainCamera.worldPosition.z
         );
+
 
         this.mainCamera.setWorldPosition(newPosition);
     }

@@ -1,9 +1,10 @@
 import { _decorator, Component, Node, instantiate, Prefab } from 'cc';
 import { CarController } from './CarController';
 
-const { ccclass, property } = _decorator;
+const { ccclass, property, executionOrder } = _decorator;
 
 @ccclass('GameManager')
+@executionOrder(0)
 export class GameManager extends Component {
     private static _instance: GameManager | null = null;
 
