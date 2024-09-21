@@ -83,7 +83,10 @@ export class CarController extends Component {
     }
 
     start() {
-        this.setupInputListeners();
+        if(this.isLocalPlayer){
+            this.setupInputListeners();
+            this.skillManager = SkillManager.instance;
+        }
         this.initializeState();
     }
 
@@ -96,7 +99,7 @@ export class CarController extends Component {
         this._curSpeed = this.startSpeed;
         this._isDead = false;
         this._isStunning = false;
-        this.skillManager = SkillManager.instance;
+        
     }
 
     onKeyDown(event: EventKeyboard) {
@@ -168,7 +171,6 @@ export class CarController extends Component {
                 if (apply) {
                     this.SetBonusSpeed(preset.ratio, preset.duration);
                 } else {
-                    console.log("BonusSpeed disconnected");
                     this.SetBonusSpeed(1, 0);
                 }
                 break;
@@ -192,6 +194,11 @@ export class CarController extends Component {
 
 
     update(deltaTime: number) {
+        if (this.isStunned) {
+            // Don't process input while stunned
+            return;
+        }
+
         if (this.isLocalPlayer) {
             this.updateLocalPlayerMovement(deltaTime);
             this.updateSkillDurations(deltaTime);
@@ -275,5 +282,11 @@ export class CarController extends Component {
 
     private IsSkillConnected(skill: Skill): boolean {
         return SkillManager.instance.GetisSkillConnected(skill);
+    }
+
+    private isStunned: boolean = false;
+
+    setStunned(stunned: boolean) {
+        this.isStunned = stunned;
     }
 }

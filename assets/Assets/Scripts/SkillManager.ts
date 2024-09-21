@@ -115,7 +115,6 @@ export class SkillManager extends Component {
         this.skillStates.forEach((state, skill) => {
             this.updateSkillByState(skill, dt);
             if (skill === Skill.BonusSpeed) {
-                console.log("Skill State: ", state.state, "Cooldown Progress: ", state.cooldownProgress);
             }
         });
 
@@ -224,7 +223,6 @@ export class SkillManager extends Component {
         const state = this.skillStates.get(skill);
         if (this.playerController && this.playerController.getSkillRemainingDurations(skill) <= 0) {
             this.playerController.connectSkill(skill, false);
-            console.log("Skill disconnected: ", skill);
             return isDisconnected = true;
         }
         return isDisconnected = false;
