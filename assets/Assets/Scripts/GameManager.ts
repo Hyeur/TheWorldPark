@@ -22,40 +22,41 @@ export class GameManager extends Component {
         }
     }
 
-    onDestroy() {
-        if (GameManager._instance === this) {
-            GameManager._instance = null;
-        }
-    }
-
-    @property(Prefab)
-    carPrefab: Prefab | null = null;
-
-    @property(Node)
-    playerSpawnPoint: Node | null = null;
-
     start() {
-        if (!this.findLocalPlayerCar()) {
+        if (!this.playerCarController) {
             this.spawnPlayerCar();
         }
     }
 
     private spawnPlayerCar() {
-        if (this.carPrefab && this.playerSpawnPoint) {
-            const playerCar = instantiate(this.carPrefab);
-            playerCar.setParent(this.node);
-            playerCar.setWorldPosition(this.playerSpawnPoint.worldPosition);
+        if (!this.carPrefab || !this.playerSpawnPoint) return;
 
-            const carController = playerCar.getComponent(CarController);
-            if (carController) {
-                carController.SetLocalPlayer(true);
-            }
+        const playerCar = instantiate(this.carPrefab);
+        playerCar.setParent(this.node);
+        playerCar.setWorldPosition(this.playerSpawnPoint.worldPosition);
+        this.playerCar = playerCar;
+
+        const carController = playerCar.getComponent(CarController);
+        if (carController) {
+            carController.SetLocalPlayer(true);
+            this.playerCarController = carController;
         }
     }
 
-    public findLocalPlayerCar(out?: CarController): boolean {
-        const carControllers = this.node.scene.getComponentsInChildren(CarController);
-        return carControllers.find(car => car.isLocalPlayer) != null;
-    }
+    @property(Prefab)
+    carPrefab: Prefab | null = null;
+    @property(Node)
+    playerCar: Node | null = null;
+    @property(CarController)
+    playerCarController: CarController | null = null;
+    @property(Node)
+    playerSpawnPoint: Node | null = null;
 
+    onDestroy() {
+        if (GameManager._instance === this) {
+            GameManager._instance = null;
+        }
+        this.node.destroy();
+        console.log("GameManager destroyed");
+    }
 }

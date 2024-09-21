@@ -21,10 +21,9 @@ export class CarController extends Component {
     skillManager: SkillManager | null = null;
     private _isLocalPlayer: boolean = false;
     protected direction: Vec2 = new Vec2(0, 1);
-    protected isMovingUp: boolean = false;
-    protected isMovingDown: boolean = false;
-    protected isMovingLeft: boolean = false;
-    protected isMovingRight: boolean = false;
+    protected movement: { [key: string]: boolean } = {
+        up: false, down: false, left: false, right: false
+    };
     protected _curSpeed: number = 0;
     protected _curDirection: Vec2 = new Vec2(0, 0);
     private _isDead: boolean = false;
@@ -82,48 +81,40 @@ export class CarController extends Component {
     }
 
     start() {
+        this.setupInputListeners();
+        this.initializeState();
+    }
+
+    private setupInputListeners() {
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
+    }
 
-
+    private initializeState() {
         this._curSpeed = this.startSpeed;
         this._isDead = false;
         this._isStunning = false;
-
         this.skillManager = SkillManager.instance;
     }
 
     onKeyDown(event: EventKeyboard) {
-        switch (event.keyCode) {
-            case KeyCode.KEY_W:
-                this.isMovingUp = true;
-                break;
-            case KeyCode.KEY_S:
-                this.isMovingDown = true;
-                break;
-            case KeyCode.KEY_A:
-                this.isMovingLeft = true;
-                break;
-            case KeyCode.KEY_D:
-                this.isMovingRight = true;
-                break;
-        }
+        this.updateMovementState(event.keyCode, true);
     }
 
     onKeyUp(event: EventKeyboard) {
-        switch (event.keyCode) {
-            case KeyCode.KEY_W:
-                this.isMovingUp = false;
-                break;
-            case KeyCode.KEY_S:
-                this.isMovingDown = false;
-                break;
-            case KeyCode.KEY_A:
-                this.isMovingLeft = false;
-                break;
-            case KeyCode.KEY_D:
-                this.isMovingRight = false;
-                break;
+        this.updateMovementState(event.keyCode, false);
+    }
+
+    private updateMovementState(keyCode: KeyCode, isPressed: boolean) {
+        const keyMap: { [key: number]: string } = {
+            [KeyCode.KEY_W]: 'up',
+            [KeyCode.KEY_S]: 'down',
+            [KeyCode.KEY_A]: 'left',
+            [KeyCode.KEY_D]: 'right'
+        };
+        const direction = keyMap[keyCode];
+        if (direction) {
+            this.movement[direction] = isPressed;
         }
     }
 
@@ -178,33 +169,41 @@ export class CarController extends Component {
     }
 
     update(deltaTime: number) {
-        let targetDirection = new Vec2(0, 0);
-
         if (this.isLocalPlayer) {
-            if (this.isMovingUp) targetDirection.y += 1;
-            if (this.isMovingDown) targetDirection.y -= 1;
-            if (this.isMovingLeft) targetDirection.x -= 1;
-            if (this.isMovingRight) targetDirection.x += 1;
+            this.updateLocalPlayerMovement(deltaTime);
         }
+    }
 
+    private updateLocalPlayerMovement(deltaTime: number) {
+        const targetDirection = this.calculateTargetDirection();
+        this.updateCurrentDirection(targetDirection, deltaTime);
+        this.updateCurrentSpeed(targetDirection, deltaTime);
+        this.applyMovement(deltaTime, this._curDirection, this._curSpeed);
+    }
 
+    private calculateTargetDirection(): Vec2 {
+        let target = new Vec2(0, 0);
+        if (this.movement.up) target.y += 1;
+        if (this.movement.down) target.y -= 1;
+        if (this.movement.left) target.x -= 1;
+        if (this.movement.right) target.x += 1;
+        return target.normalize();
+    }
+
+    private updateCurrentDirection(targetDirection: Vec2, deltaTime: number) {
         if (targetDirection.x !== 0 || targetDirection.y !== 0) {
-            targetDirection.normalize();
-
-            // Lerp the current direction towards the target direction
             this._curDirection = new Vec2(
                 this.lerp(this._curDirection.x, targetDirection.x, this.rotationLerpSpeed * deltaTime),
                 this.lerp(this._curDirection.y, targetDirection.y, this.rotationLerpSpeed * deltaTime)
             );
-
-            //Lerp the current speed towards the target speed
-            this._curSpeed = this.lerp(this._curSpeed, this.maxSpeed, deltaTime * this.acceleration);
-
-            this.applyMovement(deltaTime, this._curDirection);
         }
-        else {
+    }
+
+    private updateCurrentSpeed(targetDirection: Vec2, deltaTime: number) {
+        if (targetDirection.x !== 0 || targetDirection.y !== 0) {
+            this._curSpeed = this.lerp(this._curSpeed, this.maxSpeed, deltaTime * this.acceleration);
+        } else {
             this._curSpeed = this.lerp(this._curSpeed, 0, deltaTime * this.deceleration);
-            this.applyMovement(deltaTime, this._curDirection, this._curSpeed);
         }
     }
 
@@ -224,5 +223,16 @@ export class CarController extends Component {
 
     SetImmortal(immortalDurationInSeconds: number): void {
         this._immortalDurationInSeconds = immortalDurationInSeconds;
+    }
+
+    onDestroy() {
+        this.removeInputListeners();
+        this.node.destroy();
+        console.log("CarController destroyed");
+    }
+
+    private removeInputListeners() {
+        input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+        input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
     }
 }

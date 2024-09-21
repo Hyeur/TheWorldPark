@@ -18,16 +18,21 @@ export class CameraFollow extends Component {
     cameraSmoothing: number = 0.1;
 
     start() {
+        this.initializeCamera();
+        this.findPlayerCar();
+    }
+
+    private initializeCamera() {
         if (!this.mainCamera) {
-            this.mainCamera = this.node.getComponent(Camera).node;
+            this.mainCamera = this.node.getComponent(Camera)?.node || null;
         }
-        
+    }
+
+    private findPlayerCar() {
         if (!this.playerCar) {
-            let outCarController: CarController | null = null;
-            const haveLocalPlayerCar = GameManager.instance.findLocalPlayerCar(outCarController);
-            
-            if (haveLocalPlayerCar) {
-                this.playerCar = outCarController.node;
+            const playerController = GameManager.instance.playerCarController;
+            if (playerController) {
+                this.playerCar = playerController.node;
                 console.log("Local player car found and set as target for camera.");
             } else {
                 console.warn("No local player car found in the scene.");
@@ -43,15 +48,13 @@ export class CameraFollow extends Component {
         if (!this.playerCar || !this.mainCamera) return;
 
         const targetPosition = this.playerCar.worldPosition.clone().add(this.cameraOffset);
-        const cameraNode = this.mainCamera;
-
         const newPosition = new Vec3(
-            this.lerp(cameraNode.worldPosition.x, targetPosition.x, this.cameraSmoothing),
-            this.lerp(cameraNode.worldPosition.y, targetPosition.y, this.cameraSmoothing),
-            cameraNode.worldPosition.z
+            this.lerp(this.mainCamera.worldPosition.x, targetPosition.x, this.cameraSmoothing),
+            this.lerp(this.mainCamera.worldPosition.y, targetPosition.y, this.cameraSmoothing),
+            this.mainCamera.worldPosition.z
         );
 
-        cameraNode.setWorldPosition(newPosition);
+        this.mainCamera.setWorldPosition(newPosition);
     }
 
     private lerp(start: number, end: number, t: number): number {
