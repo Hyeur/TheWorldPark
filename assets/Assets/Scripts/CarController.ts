@@ -194,15 +194,12 @@ export class CarController extends Component {
 
 
     update(deltaTime: number) {
-        if (this.isStunned) {
-            // Don't process input while stunned
-            return;
-        }
-
         if (this.isLocalPlayer) {
+            if (this.isStunned) return;
             this.updateLocalPlayerMovement(deltaTime);
             this.updateSkillDurations(deltaTime);
         }
+
     }
 
     private updateLocalPlayerMovement(deltaTime: number) {
