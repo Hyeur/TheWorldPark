@@ -26,6 +26,9 @@ export class CarController extends Component {
     };
     protected _curSpeed: number = 0;
     protected _curDirection: Vec2 = new Vec2(0, 0);
+    public set curDirection(value: Vec2) {
+        this._curDirection = value;
+    }
     private _isDead: boolean = false;
     private _isStunning: boolean = false;
     protected stunDurationInSeconds: number = 1;
@@ -33,6 +36,7 @@ export class CarController extends Component {
     ////////////////bonus//////////////////
     protected _bonusSpeedRatio: number = 1.2;
     protected _magnetRadius: number = 100;
+    protected _immortalDuration: number = 3;
     ////////////////////////////////////////
     protected get isDead(): boolean {
         return this._isDead;
@@ -195,7 +199,10 @@ export class CarController extends Component {
 
     update(deltaTime: number) {
         if (this.isLocalPlayer) {
-            if (this.isStunned) return;
+            if (this.isStunned) {
+                this.curDirection = new Vec2(0, 0);
+                return;   
+            }
             this.updateLocalPlayerMovement(deltaTime);
             this.updateSkillDurations(deltaTime);
         }

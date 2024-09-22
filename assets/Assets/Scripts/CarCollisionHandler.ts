@@ -1,5 +1,6 @@
-import { _decorator, Component, Contact2DType, IPhysics2DContact, Vec2, tween, RigidBody2D, Vec3, Node, CircleCollider2D } from 'cc';
+import { _decorator, Component, Contact2DType, IPhysics2DContact, Vec2, tween, RigidBody2D, Vec3, Node, CircleCollider2D, Quat } from 'cc';
 import { CarController } from './CarController';
+import { macro } from 'cc';
 
 const { ccclass, property } = _decorator;
 
@@ -10,6 +11,9 @@ export class CarCollisionHandler extends Component {
     public getCarColliders(): CircleCollider2D[] {
         return this.carColliders;
     }
+    public addCarCollider(collider: CircleCollider2D) {
+        this.carColliders.push(collider);
+    }
 
     @property
     pushBackForce: number = 150;
@@ -17,13 +21,38 @@ export class CarCollisionHandler extends Component {
     @property
     stunDuration: number = 1;
 
+    @property
+    collisionCooldown: number = 0.5; // Cooldown time in seconds
+    @property(Node)
+    private frontCar: Node = null!;
     private carController: CarController = null!;
+    private rigidbody: RigidBody2D = null!;
+
+    private lastCollisionTime: number = 0;
 
     start() {
-
         this.carController = this.getComponent(CarController)!;
-        this.carColliders = this.getComponents(CircleCollider2D);
+        this.rigidbody = this.node.getComponent(RigidBody2D)!;
+        this.carColliders = this.node.getComponents(CircleCollider2D);
+        
+        // this.waitForCollidersAndEnable();
+        // this.fetchCollidersFromInternalComponents();
         this.enableCollisionListeners();
+    }
+
+    private waitForCollidersAndEnable() {
+        console.log("waiting for colliders");
+        this.schedule(this.checkAndEnableColliders, 0.1, macro.REPEAT_FOREVER, 0);
+    }
+
+    private checkAndEnableColliders() {
+        if (this.carColliders.length > 0) {
+            console.log("checkAndEnableColliders called");
+            this.unschedule(this.checkAndEnableColliders);
+            this.castCollsionsToInternalComponents();
+            this.enableCollisionListeners();
+            console.log(this.node, "collision listeners enabled");
+        }
     }
 
     onEnable() {
@@ -32,6 +61,26 @@ export class CarCollisionHandler extends Component {
 
     onDisable() {
         this.disableCollisionListeners();
+    }
+
+    public castCollsionsToInternalComponents() {
+        this.carColliders.forEach(collider => {
+            //add new collider component to node
+            let newCollider = this.node.addComponent(CircleCollider2D);
+            newCollider.radius = collider.radius;
+            newCollider.density = collider.density;
+            newCollider.friction = collider.friction;
+            newCollider.restitution = collider.restitution;
+            newCollider.offset = collider.offset;
+            newCollider.sensor = collider.sensor;
+            newCollider.enabled = collider.enabled;
+        });
+        this.fetchCollidersFromInternalComponents();
+    }
+
+    public fetchCollidersFromInternalComponents() {
+        this.carColliders = [];
+        this.carColliders = this.node.getComponents(CircleCollider2D);
     }
 
     private enableCollisionListeners() {
@@ -47,18 +96,26 @@ export class CarCollisionHandler extends Component {
     }
 
     onBeginContact(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null) {
+        const currentTime = Date.now() / 1000; // Current time in seconds
+        if (currentTime - this.lastCollisionTime < this.collisionCooldown) {
+            return; // Exit if still in cooldown
+        }
+        this.lastCollisionTime = currentTime;
+
         console.log("onBeginContact called", selfCollider, otherCollider);
         if (otherCollider.node.getComponent(CarController)) {
             // Calculate push back direction
             const pushDirection = otherCollider.node.worldPosition.subtract(selfCollider.node.worldPosition).normalize();
             const pushDistance = pushDirection.multiplyScalar(this.pushBackForce); // Adjust distance based on force
 
-            let secondSelfCollider: CircleCollider2D = this.carColliders.find(collider => collider !== selfCollider)!;
+            // let secondSelfCollider: CircleCollider2D = this.carColliders.find(collider => collider !== selfCollider)!;
             let otherCarHandler = otherCollider.node.getComponent(CarCollisionHandler);
-            let secondOtherCollider: CircleCollider2D = otherCarHandler?.getCarColliders().find(collider => collider !== otherCollider);
+            // let secondOtherCollider: CircleCollider2D = otherCarHandler?.getCarColliders().find(collider => collider !== otherCollider);
             // Push back both cars using Tween
-            this.pushBackCar(selfCollider.node, pushDistance);
-            this.pushBackCar(otherCollider.node, pushDistance.negative());
+            // this.pushBackCar(selfCollider.node, pushDistance);
+            // this.pushBackCar(otherCollider.node, pushDistance.negative());
+            this.rigidbody.applyForce(new Vec2(-pushDistance.x, -pushDistance.y), selfCollider.worldPosition, true);
+            otherCarHandler?.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y), otherCollider.worldPosition, true);
 
             // Stun both cars
             this.stunCar(this.carController);
@@ -78,7 +135,28 @@ export class CarCollisionHandler extends Component {
     private stunCar(carController: CarController) {
         carController.setStunned(true);
         this.scheduleOnce(() => {
+            this.easeVelocityToZero(0.4);
+            
             carController.setStunned(false);
         }, this.stunDuration);
+    }
+
+    private easeVelocityToZero(t: number = 0.1): void {
+        const currentVelocity = this.rigidbody.linearVelocity;
+        const targetVelocity = Vec2.ZERO;
+        this.rigidbody.linearVelocity = this.calculateEasedVelocity(currentVelocity, targetVelocity, t);
+    }
+
+    private calculateEasedVelocity(current: Vec2, target: Vec2, t: number): Vec2 {
+        const easeFunction = (x: number) => 1 - Math.pow(1 - x, 3);
+        return new Vec2(
+            current.x + (target.x - current.x) * easeFunction(t),
+            current.y + (target.y - current.y) * easeFunction(t)
+        );
+    }
+
+    public getLookDirection(): Vec2 {
+        const direction = this.frontCar.position.subtract(this.carController.node.position).normalize();
+        return new Vec2(direction.x, direction.y);
     }
 }
