@@ -104,22 +104,19 @@ export class CarCollisionHandler extends Component {
 
         console.log("onBeginContact called", selfCollider, otherCollider);
         if (otherCollider.node.getComponent(CarController)) {
+            // Stun both cars
+            this.stunCar(this.carController);
+            this.stunCar(otherCollider.node.getComponent(CarController)!);
+
             // Calculate push back direction
             const pushDirection = otherCollider.node.worldPosition.subtract(selfCollider.node.worldPosition).normalize();
             const pushDistance = pushDirection.multiplyScalar(this.pushBackForce); // Adjust distance based on force
 
-            // let secondSelfCollider: CircleCollider2D = this.carColliders.find(collider => collider !== selfCollider)!;
             let otherCarHandler = otherCollider.node.getComponent(CarCollisionHandler);
-            // let secondOtherCollider: CircleCollider2D = otherCarHandler?.getCarColliders().find(collider => collider !== otherCollider);
-            // Push back both cars using Tween
-            // this.pushBackCar(selfCollider.node, pushDistance);
-            // this.pushBackCar(otherCollider.node, pushDistance.negative());
+
             this.rigidbody.applyForce(new Vec2(-pushDistance.x, -pushDistance.y), selfCollider.worldPosition, true);
             otherCarHandler?.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y), otherCollider.worldPosition, true);
 
-            // Stun both cars
-            this.stunCar(this.carController);
-            this.stunCar(otherCollider.node.getComponent(CarController)!);
         }
     }
 
@@ -133,11 +130,10 @@ export class CarCollisionHandler extends Component {
     }
 
     private stunCar(carController: CarController) {
-        carController.setStunned(true);
+        this.carController.setStunned(true);
         this.scheduleOnce(() => {
-            this.easeVelocityToZero(0.4);
-            
-            carController.setStunned(false);
+            this.easeVelocityToZero(0.9);
+            this.carController.setStunned(false);
         }, this.stunDuration);
     }
 
@@ -156,7 +152,7 @@ export class CarCollisionHandler extends Component {
     }
 
     public getLookDirection(): Vec2 {
-        const direction = this.frontCar.position.subtract(this.carController.node.position).normalize();
+        const direction = this.frontCar.worldPosition.subtract(this.node.worldPosition).normalize();
         return new Vec2(direction.x, direction.y);
     }
 }
