@@ -6,5 +6,33 @@
       "fitWidth": true,
       "fitHeight": false
     }
+  },
+  "physics": {
+    "allowSleep": false,
+    "collisionGroups": [
+      {
+        "index": 1,
+        "name": "Magnet"
+      },
+      {
+        "index": 2,
+        "name": "Booster"
+      },
+      {
+        "index": 3,
+        "name": "Car"
+      },
+      {
+        "index": 4,
+        "name": "Bound"
+      }
+    ],
+    "collisionMatrix": {
+      "0": 1,
+      "1": 4,
+      "2": 10,
+      "3": 28,
+      "4": 8
+    }
   }
 }

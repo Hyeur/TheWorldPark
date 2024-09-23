@@ -31,12 +31,13 @@ export class GameManager extends Component {
         } else {
             GameManager._instance = this;
         }
-    }
-
-    start() {
         if (!this.playerCarController) {
             this.spawnPlayerCar();
         }
+    }
+
+    start() {
+        
     }
 
     private spawnPlayerCar() {

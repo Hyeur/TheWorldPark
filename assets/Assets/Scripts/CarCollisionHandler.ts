@@ -1,6 +1,7 @@
 import { _decorator, Component, Contact2DType, IPhysics2DContact, Vec2, tween, RigidBody2D, Vec3, Node, CircleCollider2D, Quat, BoxCollider2D, Collider2D, ECollider2DType } from 'cc';
 import { CarController } from './CarController';
 import { macro } from 'cc';
+import { GameObject, GameObjectType } from './GameObject';
 
 const { ccclass, property } = _decorator;
 
@@ -99,17 +100,17 @@ export class CarCollisionHandler extends Component {
     }
     
     onBeginContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null) {
-        console.log("onBeginContactCar: ",selfCollider, otherCollider, contact);
         const currentTime = Date.now() / 1000; // Current time in seconds
         if (currentTime - this.lastCollisionTime < this.collisionCooldown) {
             return; // Exit if still in cooldown
         }
         this.lastCollisionTime = currentTime;
         if (otherCollider.node.getComponent(CarController)) {
-            if (otherCollider.TYPE == ECollider2DType.CIRCLE) {
+            if (otherCollider.TYPE == ECollider2DType.CIRCLE && otherCollider.node.getComponent(GameObject).objectType !== GameObjectType.MagnetSkillRange) {
                 // Stun both cars
                 this.stunCar(this.carController);
                 this.stunCar(otherCollider.node.getComponent(CarController)!);
+                console.log("onBeginContactCar: ",selfCollider, otherCollider, contact);
 
                 // Calculate push back direction
                 const pushDirection = otherCollider.node.worldPosition.subtract(selfCollider.node.worldPosition).normalize();
@@ -130,7 +131,8 @@ export class CarCollisionHandler extends Component {
 
     onBeginContactBound(selfCollider: CircleCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
         console.log("onBeginContactCar: ",selfCollider, otherCollider, contact);
-        if (selfCollider.TYPE == ECollider2DType.CIRCLE && otherCollider.TYPE == ECollider2DType.BOX){
+        if (selfCollider.TYPE == ECollider2DType.CIRCLE && otherCollider.TYPE == ECollider2DType.BOX &&
+             otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Bounds){
             // Stun both cars
             this.stunCar(this.carController);
 

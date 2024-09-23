@@ -6,6 +6,8 @@ export enum GameObjectType {
     Player,
     Enemy,
     Collectible,
+    Bounds,
+    MagnetSkillRange
 }
 
 Enum(GameObjectType);

@@ -37,10 +37,9 @@ export class Tools {
         if (offsetHeight){
             rect.height -= offsetWidth * 2;
         }
-        let x = this.RandomRange(rect.x, rect.x + rect.width);
-        let y = this.RandomRange(rect.y, rect.y + rect.height);
+        let x = this.RandomRange(-(rect.width), rect.width);
+        let y = this.RandomRange(-(rect.height), rect.height);
         
         return new Vec2(x, y);
     }
-
 }

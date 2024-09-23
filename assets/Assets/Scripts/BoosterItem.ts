@@ -1,4 +1,4 @@
-import { _decorator, CircleCollider2D, Component, Contact2DType, Node, UIOpacity } from 'cc';
+import { _decorator, BoxCollider2D, CircleCollider2D, Component, Contact2DType, Node, UIOpacity } from 'cc';
 import { GameObject, GameObjectType } from './GameObject';
 import { CarController, CarState } from './CarController';
 import { ConstConfig } from './Utils/ConstConfig';
@@ -22,22 +22,24 @@ export default class BoosterItem extends Component {
 
     collectiveSoundId: number = null;
 
-    private collider: CircleCollider2D = null;
+    private collider: BoxCollider2D = null;
 
     private visual: UIOpacity = null;
 
     onLoad() {
         if (!this.collider){
-            this.collider = this.getComponent(CircleCollider2D);
+            this.collider = this.getComponent(BoxCollider2D);
         }
         this.visual = this.node.getComponent(UIOpacity);
     }
 
     start(){
-        this.registerEvents();
+        if (this.collider){
+            this.collider.on(Contact2DType.BEGIN_CONTACT, this.onCollisionEnter, this);
+        }
     }
 
-    onCollisionEnter(self: CircleCollider2D, other:CircleCollider2D){
+    onCollisionEnter(self: BoxCollider2D, other:CircleCollider2D){
         console.log("onCollect");
         let whoCollided = other.node.getComponent(GameObject);
         if (whoCollided.objectType == (GameObjectType.Player || GameObjectType.Enemy) &&
@@ -54,6 +56,9 @@ export default class BoosterItem extends Component {
             case CollectibleState.Idle:
                 if (this.timeActive > 0){
                     this.timeActive -= deltaTime;
+                }
+                else {
+                    this.rePosition();
                 }
                 break;
             case CollectibleState.Collecting:
@@ -76,14 +81,18 @@ export default class BoosterItem extends Component {
     //no one collect, timeActive end
     rePosition() {
         BoosterSpawner.instance.rePositionBoosterNode(this.node);
+        this.timeActive = ConstConfig.BOOSTER.PARAM.timeActive;
     }
 
     setHide(isHiding: boolean) {
         if (isHiding){
-            this.unregisterEvents();
+            this.disableCollider();
+            BoosterSpawner.instance.currentBoosterCount--;
         }
         else{
-            this.registerEvents();
+            this.rePosition();
+            this.enableCollider();
+            BoosterSpawner.instance.currentBoosterCount++;
         }
         this.curState = isHiding ? CollectibleState.Hidding : CollectibleState.Idle;
 
@@ -96,16 +105,14 @@ export default class BoosterItem extends Component {
         }
     }
 
-    registerEvents(){
+    enableCollider(){
         if (!this.collider) return;
-        this.collider.on(Contact2DType.BEGIN_CONTACT, this.onCollisionEnter, this);
+        this.collider.enabled = true;
     }
 
-    unregisterEvents(){
+    disableCollider(){
         if (!this.collider) return;
-        this.collider.off(Contact2DType.BEGIN_CONTACT, this.onCollisionEnter, this);
+        this.collider.enabled = false;
     }
 
 }
-
-

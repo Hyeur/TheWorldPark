@@ -57,15 +57,9 @@ export class CarController extends Component {
     }
     protected get isStunning(): boolean {
         return this._isStunning;
-    }
-    protected set isStunning(value: boolean) {
-        this._isStunning = value;
-    }
+    }    
     public get isLocalPlayer(): boolean {
         return this._isLocalPlayer;
-    }
-    public set isLocalPlayer(value: boolean) {
-        this._isLocalPlayer = value;
     }
     public getWorldPosition(): Vec2 {
         return new Vec2(this.node.worldPosition.x, this.node.worldPosition.y);
@@ -88,11 +82,6 @@ export class CarController extends Component {
     isPlayerStun(): boolean {
         return this.isStunning;
     }
-
-    GetIsLocalPlayer(): boolean {
-        return this.isLocalPlayer;
-    }
-
     SetLocalPlayer(value: boolean): void {
         this._isLocalPlayer = value;
     }

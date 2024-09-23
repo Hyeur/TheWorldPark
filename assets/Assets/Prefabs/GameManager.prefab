@@ -25,11 +25,11 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 4
+        "__id__": 10
       }
     ],
     "_prefab": {
-      "__id__": 6
+      "__id__": 12
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -61,16 +61,26 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "zero point",
+    "_name": "Spawn Point Preview",
     "_objFlags": 0,
     "_parent": {
       "__id__": 1
     },
     "_children": [],
     "_active": true,
-    "_components": [],
+    "_components": [
+      {
+        "__id__": 3
+      },
+      {
+        "__id__": 5
+      },
+      {
+        "__id__": 7
+      }
+    ],
     "_prefab": {
-      "__id__": 3
+      "__id__": 9
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -101,6 +111,98 @@
     "_id": ""
   },
   {
+    "__type__": "cc.UITransform",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 2
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 4
+    },
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 42,
+      "height": 62
+    },
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "x": 0.5,
+      "y": 0.5
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "2exrQ5K2hA970akf4Nkw9H"
+  },
+  {
+    "__type__": "cc.Sprite",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 2
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 6
+    },
+    "_customMaterial": null,
+    "_srcBlendFactor": 2,
+    "_dstBlendFactor": 4,
+    "_color": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_spriteFrame": {
+      "__uuid__": "9dc57550-c4b8-4e13-87fc-73012ce9d8f0@f9941",
+      "__expectedType__": "cc.SpriteFrame"
+    },
+    "_type": 0,
+    "_fillType": 0,
+    "_sizeMode": 1,
+    "_fillCenter": {
+      "__type__": "cc.Vec2",
+      "x": 0,
+      "y": 0
+    },
+    "_fillStart": 0,
+    "_fillRange": 0,
+    "_isTrimmedMode": true,
+    "_useGrayscale": false,
+    "_atlas": null,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "3cxdHV3NpH74brINodI4MO"
+  },
+  {
+    "__type__": "cc.UIOpacity",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 2
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 8
+    },
+    "_opacity": 97.1,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "65S21mqn5FZ6AYs/S06hYz"
+  },
+  {
     "__type__": "cc.PrefabInfo",
     "root": {
       "__id__": 1
@@ -119,12 +221,14 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 5
+      "__id__": 11
     },
     "carPrefab": {
       "__uuid__": "2c2ebbf4-1fa5-4ed6-8cd5-dcd17e7dc6a9",
       "__expectedType__": "cc.Prefab"
     },
+    "playerCar": null,
+    "playerCarController": null,
     "playerSpawnPoint": {
       "__id__": 2
     },

@@ -1,9 +1,10 @@
 import { _decorator, Component, Node, Prefab, Rect, Vec3, Vec2, instantiate } from 'cc';
 import BoosterItem, { CollectibleState } from './BoosterItem';
 import { Tools } from './Utils/Tools';
-const { ccclass, property } = _decorator;
-
+import { ScreenManager } from './ScreenManager';
+const { ccclass, property, executionOrder } = _decorator;
 @ccclass('BoosterSpawner')
+@executionOrder(4)
 export class BoosterSpawner extends Component {
     // Singleton setup
     private static _instance: BoosterSpawner | null = null;
@@ -23,20 +24,22 @@ export class BoosterSpawner extends Component {
     maxBoosterPointGiving: number = 5;
     @property
     maxPresentBoosterCount: number = 10;
+    @property
+    respawnIntervalInSeconds: number = 1;
 
-    private _currentBoosterCount: number = 0;
+    currentBoosterCount: number = 0;
 
     private boosterNodePool: Node[] = [];
+    private lastTimeRespawn: number = 0;
 
-    @property(Rect)
-    SpawnArea: Rect = null;
+    private firstInittialized: boolean = false;
 
     start() {
         this.createNodesAndInitData();
     }
-
+    
     update(deltaTime: number) {
-
+        this.reActiveBoosterNode();
     }
 
     generateBoosterData(): BoosterItem | void {
@@ -48,9 +51,14 @@ export class BoosterSpawner extends Component {
     }
 
     reActiveBoosterNode() {
-        let targetInactiveNode: Node = null;
-        let targetInactiveBoosterItem: BoosterItem = null;
-        if (this.getAnyInActiveBooster(targetInactiveNode, targetInactiveBoosterItem)){
+        if (!this.firstInittialized) return;
+        const currentTime = Date.now() / 1000; // Current time in seconds
+        if (currentTime - this.lastTimeRespawn < this.respawnIntervalInSeconds) {
+            return; // Exit if still in cooldown
+        }
+        this.lastTimeRespawn = currentTime;
+        let targetInactiveBoosterItem = this.getAnyInActiveBooster();
+        if (targetInactiveBoosterItem){
             this.setNewBoosterData(targetInactiveBoosterItem);
             targetInactiveBoosterItem.setHide(false);
         }
@@ -58,7 +66,7 @@ export class BoosterSpawner extends Component {
     }
 
     rePositionBoosterNode(boosterNode: Node) {
-        let newPos = this.getNewRandomPosition(this.SpawnArea);
+        let newPos = this.getNewRandomPosition(ScreenManager.instance.battleArea);
         boosterNode.setPosition(new Vec3(newPos.x, newPos.y, 0));
     }
 
@@ -79,23 +87,23 @@ export class BoosterSpawner extends Component {
             this.node.addChild(newBoosterNode);
             //pooling
             this.boosterNodePool.push(newBoosterNode);
+            this.currentBoosterCount++;
         }
+        this.firstInittialized = true;
     }
 
-    getAnyInActiveBooster(outBoosterNode?: Node, outBoosterComp?: BoosterItem): boolean{
-        outBoosterNode = this.boosterNodePool.find(node => node.getComponent(BoosterItem).curState == CollectibleState.Hidding);
-        if (outBoosterNode) {
-            outBoosterComp = outBoosterNode.getComponent(BoosterItem);
-            return true;
-        }
-        return false;
+    getAnyInActiveBooster(): BoosterItem{
+        let node = this.boosterNodePool.find(node => node.getComponent(BoosterItem).curState == CollectibleState.Hidding);
+        if (!node) return;
+        let outComp = node.getComponent(BoosterItem);
+        return outComp;
     }
 
     setNewBoosterData(destinationBooster: BoosterItem){
         //generate new data and parse to destinatoin
         let newData = this.generateBoosterData();
         if (newData){
-            destinationBooster.resetData(newData)
+            destinationBooster.resetData(newData);
         }
     }
 }
