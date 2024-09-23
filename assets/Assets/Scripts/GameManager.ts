@@ -15,6 +15,16 @@ export class GameManager extends Component {
         return this._instance;
     }
 
+    @property(Prefab)
+    carPrefab: Prefab | null = null;
+    @property(Node)
+    playerCar: Node | null = null;
+    @property()
+    playerCarController: CarController | null = null;
+    @property(Node)
+    playerSpawnPoint: Node | null = null;
+
+
     onLoad() {
         if (GameManager._instance) {
             this.node.destroy();
@@ -43,15 +53,6 @@ export class GameManager extends Component {
             this.playerCarController = carController;
         }
     }
-
-    @property(Prefab)
-    carPrefab: Prefab | null = null;
-    @property(Node)
-    playerCar: Node | null = null;
-    @property(CarController)
-    playerCarController: CarController | null = null;
-    @property(Node)
-    playerSpawnPoint: Node | null = null;
 
     onDestroy() {
         if (GameManager._instance === this) {

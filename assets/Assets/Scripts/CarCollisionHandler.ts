@@ -86,17 +86,20 @@ export class CarCollisionHandler extends Component {
 
     private enableCollisionListeners() {
         this.carColliders.forEach(collider => {
-            collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
+            collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
+            collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
     }
 
     private disableCollisionListeners() {
         this.carColliders.forEach(collider => {
-            collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
+            collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
+            collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
     }
-
-    onBeginContact(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null) {
+    
+    onBeginContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null) {
+        console.log("onBeginContactCar: ",selfCollider, otherCollider, contact);
         const currentTime = Date.now() / 1000; // Current time in seconds
         if (currentTime - this.lastCollisionTime < this.collisionCooldown) {
             return; // Exit if still in cooldown
@@ -120,15 +123,23 @@ export class CarCollisionHandler extends Component {
                 let otherPoint = otherCenterPoint.subtract(otherCollider.worldPosition).multiplyScalar(1 / 2);
                 this.rigidbody.applyForce(new Vec2(-pushDistance.x, -pushDistance.y), selfPoint, true);
                 otherCarHandler?.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y), otherPoint, true);
-                console.log("onBeginContact");
-
+                
             }
-            else
-            {
-                // Stun both cars
-                this.stunCar(this.carController);
+        }
+    }
 
-            }
+    onBeginContactBound(selfCollider: CircleCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
+        console.log("onBeginContactCar: ",selfCollider, otherCollider, contact);
+        if (selfCollider.TYPE == ECollider2DType.CIRCLE && otherCollider.TYPE == ECollider2DType.BOX){
+            // Stun both cars
+            this.stunCar(this.carController);
+
+            // Calculate push back direction
+            const pushDirection = this.getLookDirection();
+            const pushDistance = pushDirection.multiplyScalar(this.pushBackForce); // Adjust distance based on force
+
+            let selfCenterPoint = new Vec2(this.node.worldPosition.x, this.node.worldPosition.y);
+            this.rigidbody.applyForce(new Vec2(-pushDistance.x, -pushDistance.y), selfCenterPoint, true);
         }
     }
 

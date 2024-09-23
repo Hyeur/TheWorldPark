@@ -2,6 +2,14 @@ import { _decorator, Component, Vec2, Vec3, input, Input, EventKeyboard, KeyCode
 import { SkillManager, Skill } from './SkillManager';
 import { CarCollisionHandler } from './CarCollisionHandler';
 const { ccclass, property } = _decorator;
+
+export enum CarState {
+    Idle,
+    Running,
+    Turboing,
+    Stunned,
+    Dead
+}
 @ccclass('CarController')
 export class CarController extends Component {
     @property
@@ -32,6 +40,9 @@ export class CarController extends Component {
     private _isDead: boolean = false;
     private _isStunning: boolean = false;
     protected stunDurationInSeconds: number = 1;
+
+
+    public curState: CarState = CarState.Idle;
 
     ////////////////bonus//////////////////
     protected _bonusSpeedRatio: number = 1.2;
@@ -143,8 +154,10 @@ export class CarController extends Component {
         if (this.isPlayerDie() || this.isStunned) {
             return;
         }
+        
         if (!direction) direction = this._curMomentumDirection;
-
+        if (direction == Vec2.ZERO) this.curState = CarState.Running;
+        
         //normal speed
         let curSpeed = this._curSpeed;
         if (speed) curSpeed = speed;
@@ -152,6 +165,7 @@ export class CarController extends Component {
         //bonus speed
         if (this.IsSkillConnected(Skill.BonusSpeed)) {
             curSpeed *= this._bonusSpeedRatio;
+            this.curState = CarState.Turboing;
         }
 
         //magnet
@@ -297,6 +311,7 @@ export class CarController extends Component {
 
     setStunned(stunned: boolean) {
         this.isStunned = stunned;
+        this.curState = CarState.Stunned;
         if (!stunned)
         {
             this._curMomentumDirection = Vec2.ZERO;
