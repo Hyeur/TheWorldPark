@@ -43,6 +43,12 @@ export class CarCollisionHandler extends Component {
 
     private carColliders: CircleCollider2D[] = [];
 
+    private carHitBoxCollider: BoxCollider2D = null;
+
+    private attackingValue: number = 0;
+
+    private _deltaTime: number = 0;
+
     public getCarColliders(): CircleCollider2D[] {
         return this.carColliders;
     }
@@ -54,6 +60,7 @@ export class CarCollisionHandler extends Component {
         this.carController = this.getComponent(CarController)!;
         this.rigidbody = this.node.getComponent(RigidBody2D)!;
         this.carColliders = this.node.getComponents(CircleCollider2D);
+        this.carHitBoxCollider = this.node.getComponent(BoxCollider2D);
 
         // this.waitForCollidersAndEnable();
         // this.fetchCollidersFromInternalComponents();
@@ -106,19 +113,19 @@ export class CarCollisionHandler extends Component {
     private enableCollisionListeners() {
         this.carColliders.forEach(collider => {
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
-            collider.on(Contact2DType.PRE_SOLVE, this.onStayingContactCar, this);
             collider.on(Contact2DType.END_CONTACT, this.onEndContactCar, this);
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
+        this.carHitBoxCollider.on(Contact2DType.PRE_SOLVE, this.onAttackingContactCar, this);
     }
 
     private disableCollisionListeners() {
         this.carColliders.forEach(collider => {
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
-            collider.off(Contact2DType.PRE_SOLVE, this.onStayingContactCar, this);
             collider.off(Contact2DType.END_CONTACT, this.onEndContactCar, this);
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
+        this.carHitBoxCollider.on(Contact2DType.PRE_SOLVE, this.onAttackingContactCar, this);
     }
 
 
@@ -166,19 +173,29 @@ export class CarCollisionHandler extends Component {
         }
     }
 
-    onStayingContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null){
-        console.log("collison staying");
+    onAttackingContactCar(selfCollider: BoxCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
+        
         let selfCarStat = this.node.getComponent(CarStat);
         let otherNode = otherCollider.node;
         let otherCarHandler = otherNode.getComponent(CarCollisionHandler);
         let otherControler = otherNode.getComponent(CarController);
         let otherCarStat = otherNode.getComponent(CarStat);
         
-        if (otherCollider.TYPE != ECollider2DType.CIRCLE &&
+        if (otherCollider.TYPE != ECollider2DType.BOX &&
             otherNode.getComponent(GameObject).objectType != GameObjectType.Player ||
             otherNode.getComponent(GameObject).objectType != GameObjectType.Enemy) return;
 
-            
+        let pointsDiffRate = GameManager.instance.calculatePointDiffRate(selfCarStat.curPoint,otherCarStat.curPoint);
+        if (pointsDiffRate == 0) return;
+        
+        if (selfCarStat.curPoint > 0 && otherCarStat.curPoint > 0){
+            console.count("attcking");
+            let value = 1;
+            Math.round(value);
+            Math.floor(value);
+            selfCarStat.changeCarPoint(value);
+            otherCarStat.changeCarPoint(-value);
+        }
         console.log("collison staying");
     }
     onEndContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D) {
@@ -248,11 +265,22 @@ export class CarCollisionHandler extends Component {
         return SkillManager.instance.GetIsSkillConnected(Skill.Immortal);
     }
     update(dt: number) {
+        this._deltaTime = dt;
+        if (this.checkIsInImmortalSKill()){
+            this.carHitBoxCollider.enabled = false;
+        }
+        else {
+            this.carHitBoxCollider.enabled = true;
+        }
         switch (this.curCollisionState){
             case CarCollisionState.Staying:
                 break;
             case CarCollisionState.Unknown:
                 break;
         }
+    }
+
+    onCapturing(selfPoint:number, otherPoint:number) {
+
     }
 }

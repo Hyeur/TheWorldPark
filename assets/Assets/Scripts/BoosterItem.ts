@@ -44,6 +44,7 @@ export default class BoosterItem extends Component {
     }
 
     onCollisionEnter(self: BoxCollider2D, other: CircleCollider2D) {
+        this.disableCollider();
         let whoCollided = other.node.getComponent(GameObject);
         console.log("onCollect: ", self.name, other.name);
         if (whoCollided && whoCollided.objectType == GameObjectType.Player ||
@@ -95,7 +96,6 @@ export default class BoosterItem extends Component {
 
     setHide(isHiding: boolean) {
         if (isHiding) {
-            this.disableCollider();
             BoosterSpawner.instance.currentBoosterCount--;
         }
         else {

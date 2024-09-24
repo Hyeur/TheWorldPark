@@ -25,6 +25,10 @@
       {
         "index": 4,
         "name": "Bound"
+      },
+      {
+        "index": 5,
+        "name": "CarHitBox"
       }
     ],
     "collisionMatrix": {
@@ -32,7 +36,8 @@
       "1": 4,
       "2": 10,
       "3": 28,
-      "4": 8
+      "4": 8,
+      "5": 32
     }
   }
 }
