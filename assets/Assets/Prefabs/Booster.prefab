@@ -210,6 +210,7 @@
     "__type__": "cc.Node",
     "_name": "point",
     "_objFlags": 0,
+    "__editorExtras__": {},
     "_parent": {
       "__id__": 1
     },
@@ -282,7 +283,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "4aEk5PjcRGpoA0rgA5ZAx0"
+    "fileId": "advUBmoHxDh7tot+0ZlAtx"
   },
   {
     "__type__": "cc.Label",
@@ -329,7 +330,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "32/8nI5VNN4LZiHT3QFxv0"
+    "fileId": "ecn+fGOLJDGqN8GQtQq7/R"
   },
   {
     "__type__": "cc.LabelOutline",
@@ -354,7 +355,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "fc6oc50hBPq4m9iF0p+vLT"
+    "fileId": "e0yr4kV4hNUZLwI4RNIhz1"
   },
   {
     "__type__": "cc.PrefabInfo",
@@ -364,7 +365,7 @@
     "asset": {
       "__id__": 0
     },
-    "fileId": "6bM/Ih/WZGaatIGLdXG+A+"
+    "fileId": "70HE0L8mBFUag3kGcnh50C"
   },
   {
     "__type__": "cc.UITransform",

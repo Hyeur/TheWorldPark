@@ -2,6 +2,7 @@ import { _decorator, Component, Contact2DType, IPhysics2DContact, Vec2, tween, R
 import { CarController } from './CarController';
 import { macro } from 'cc';
 import { GameObject, GameObjectType } from './GameObject';
+import { Skill, SkillManager } from './SkillManager';
 
 const { ccclass, property } = _decorator;
 
@@ -32,6 +33,8 @@ export class CarCollisionHandler extends Component {
     private lastCollisionTime: number = 0;
 
     private lastContactPoint: Vec2 = null;
+
+    private isCollisionStaying: Boolean = false;
     start() {
         this.carController = this.getComponent(CarController)!;
         this.rigidbody = this.node.getComponent(RigidBody2D)!;
@@ -88,6 +91,7 @@ export class CarCollisionHandler extends Component {
     private enableCollisionListeners() {
         this.carColliders.forEach(collider => {
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
+            collider.on(Contact2DType.END_CONTACT, this.onEndContactCar, this);
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
     }
@@ -95,8 +99,17 @@ export class CarCollisionHandler extends Component {
     private disableCollisionListeners() {
         this.carColliders.forEach(collider => {
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
+            collider.off(Contact2DType.END_CONTACT, this.onEndContactCar, this);
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
+    }
+
+    update(dt: number){
+        if (SkillManager.instance.GetIsSkillConnected(Skill.Immortal))
+        {
+            this.deActiveSelfColliders();
+        }
+        else this.reActiveSelfColliders();
     }
     
     onBeginContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null) {
@@ -106,11 +119,16 @@ export class CarCollisionHandler extends Component {
         }
         this.lastCollisionTime = currentTime;
         if (otherCollider.node.getComponent(CarController)) {
-            if (otherCollider.TYPE == ECollider2DType.CIRCLE && otherCollider.node.getComponent(GameObject).objectType !== GameObjectType.MagnetSkillRange) {
+            if (otherCollider.TYPE == ECollider2DType.CIRCLE &&
+                 otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Player ||
+                 otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Enemy) {
+                
+                
+                console.log("onBeginContactCar: ",selfCollider.name, otherCollider.name);
+                this.isCollisionStaying = true;
                 // Stun both cars
                 this.stunCar(this.carController);
                 this.stunCar(otherCollider.node.getComponent(CarController)!);
-                console.log("onBeginContactCar: ",selfCollider, otherCollider, contact);
 
                 // Calculate push back direction
                 const pushDirection = otherCollider.node.worldPosition.subtract(selfCollider.node.worldPosition).normalize();
@@ -128,11 +146,13 @@ export class CarCollisionHandler extends Component {
             }
         }
     }
-
+    onEndContactCar(){
+        this.isCollisionStaying = false;
+    }
     onBeginContactBound(selfCollider: CircleCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
-        console.log("onBeginContactCar: ",selfCollider, otherCollider, contact);
         if (selfCollider.TYPE == ECollider2DType.CIRCLE && otherCollider.TYPE == ECollider2DType.BOX &&
              otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Bounds){
+            console.log("wall contact", selfCollider.name, otherCollider.name);
             // Stun both cars
             this.stunCar(this.carController);
 
@@ -141,7 +161,7 @@ export class CarCollisionHandler extends Component {
             const pushDistance = pushDirection.multiplyScalar(this.pushBackForce); // Adjust distance based on force
 
             let selfCenterPoint = new Vec2(this.node.worldPosition.x, this.node.worldPosition.y);
-            this.rigidbody.applyForce(new Vec2(-pushDistance.x, -pushDistance.y), selfCenterPoint, true);
+            this.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y).multiplyScalar(-3), selfCenterPoint, true);
         }
     }
 
@@ -154,10 +174,10 @@ export class CarCollisionHandler extends Component {
             .start();
     }
 
-    private stunCar(carController: CarController) {
+    private stunCar(carController: CarController, duration: number = 1) {
         this.carController.setStunned(true);
         this.scheduleOnce(() => {
-            this.easeVelocityToZero(0.9);
+            this.easeVelocityToZero(duration);
             this.carController.setStunned(false);
         }, this.stunDuration);
     }
@@ -179,5 +199,14 @@ export class CarCollisionHandler extends Component {
     public getLookDirection(): Vec2 {
         const direction = this.frontCar.worldPosition.subtract(this.node.worldPosition).normalize();
         return new Vec2(direction.x, direction.y);
+    }
+
+    public deActiveSelfColliders()
+    {
+        this.carColliders.forEach(coll => coll.enabled = false);
+    }
+    public reActiveSelfColliders()
+    {
+        this.carColliders.forEach(coll => coll.enabled = true);
     }
 }

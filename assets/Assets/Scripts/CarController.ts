@@ -69,7 +69,7 @@ export class CarController extends Component {
         this.node.setPosition(new Vec3(posWP.x, posWP.y, 0));
     }
 
-    private skillDurations: Map<Skill, number> = new Map([
+    public skillDurations: Map<Skill, number> = new Map([
         [Skill.BonusSpeed, 0],
         [Skill.Magnet, 0],
         [Skill.Immortal, 0]
@@ -285,10 +285,9 @@ export class CarController extends Component {
 
     private updateSkillDurations(deltaTime: number) {
         this.skillDurations.forEach((duration, skill) => {
-            if (duration > 0 && this.IsSkillConnected(skill)) {
+            if (duration > 0) {
                 this.skillDurations.set(skill, duration - deltaTime);
             }
-
         });
     }
 

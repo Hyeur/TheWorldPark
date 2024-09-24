@@ -42,7 +42,7 @@ export class SkillManager extends Component {
     @property magnetRadius: number = 100;
     @property magnetDurationInSeconds: number = 7;
     @property magnetCooldownInSeconds: number = 12;
-    @property immortalDurationInSeconds: number = 2;
+    @property immortalDurationInSeconds: number = 3;
     @property immortalCooldownInSeconds: number = 10;
     @property(Node) bonusSpeedUI: Node | null = null;
     @property(Node) magnetUI: Node | null = null;
@@ -137,7 +137,7 @@ export class SkillManager extends Component {
                 state.state = SkillStateEnum.Cooldown;
                 break;
             case SkillStateEnum.Cooldown:
-                this.checkDisconnectedSkill(skill);
+                this.GetIsSkillConnected(skill);
                 if (state.cooldownProgress > 0) {
                     state.cooldownProgress -= dt;
                 }
@@ -189,14 +189,12 @@ export class SkillManager extends Component {
         return presets[skill] || null;
     }
 
-    public GetisSkillActivating(skill: Skill): boolean {
-        return this.skillStates.get(skill)?.state === SkillStateEnum.Cooldown || false;
-    }
-
-
+    // public GetisSkillActivating(skill: Skill): boolean {
+    //     return this.skillStates.get(skill)?.state === SkillStateEnum.Cooldown || false;
+    // }
 
     public GetisSkillConnected(skill: Skill): boolean {
-        return this.skillStates.get(skill)?.state === SkillStateEnum.Cooldown || false;
+        return this.skillStates.get(skill)?.state !== SkillStateEnum.Idle || false;
     }
 
     public getSkillCooldown(skill: Skill): number {
@@ -218,13 +216,13 @@ export class SkillManager extends Component {
     }
 
 
-    private checkDisconnectedSkill(skill: Skill, isDisconnected?: boolean) {
+    public GetIsSkillConnected(skill: Skill, isConnecting?: boolean) {
 
         const state = this.skillStates.get(skill);
         if (this.playerController && this.playerController.getSkillRemainingDurations(skill) <= 0) {
             this.playerController.connectSkill(skill, false);
-            return isDisconnected = true;
+            return isConnecting = false;
         }
-        return isDisconnected = false;
+        return isConnecting = true;
     }
 }

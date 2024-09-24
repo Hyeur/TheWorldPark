@@ -32,7 +32,9 @@ export class PlayerMagnetCircle extends Component {
     }
 
     onMagnetContactBooster(self: CircleCollider2D, other: BoxCollider2D){
+        console.log("onMagnetContactBooster: ");
         if (other.TYPE == ECollider2DType.BOX && other.node.getComponent(GameObject).objectType == GameObjectType.Collectible){
+            console.log("onMagnetContactBooster: ", self.name, other.name);
             let booster = other.node.getComponent(BoosterItem);
             if (!booster) return;
             booster.curState = CollectibleState.Collecting;

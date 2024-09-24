@@ -1,4 +1,4 @@
-import { _decorator, BoxCollider2D, CircleCollider2D, Component, Contact2DType, Node, UIOpacity } from 'cc';
+import { _decorator, BoxCollider2D, CircleCollider2D, Component, Contact2DType, ECollider2DType, Label, Node, UIOpacity } from 'cc';
 import { GameObject, GameObjectType } from './GameObject';
 import { CarController, CarState } from './CarController';
 import { ConstConfig } from './Utils/ConstConfig';
@@ -14,7 +14,7 @@ export enum CollectibleState {
 @ccclass('BoosterItem')
 export default class BoosterItem extends Component {
     boosterID: number = 0;
-    static nextBoosterID:number = 0;
+    static nextBoosterID: number = 0;
     curState: CollectibleState = CollectibleState.Idle;
 
     timeActive: number = ConstConfig.BOOSTER.PARAM.timeActive;
@@ -24,27 +24,31 @@ export default class BoosterItem extends Component {
 
     private collider: BoxCollider2D = null;
 
-    private visual: UIOpacity = null;
+    private texture: UIOpacity = null;
+    
+    private pointText: Label = null;
 
     onLoad() {
-        if (!this.collider){
+        if (!this.collider) {
             this.collider = this.getComponent(BoxCollider2D);
         }
-        this.visual = this.node.getComponent(UIOpacity);
+        this.texture = this.node.getComponent(UIOpacity);
+        this.pointText = this.node.getComponentInChildren(Label);
     }
 
-    start(){
-        if (this.collider){
+    start() {
+        if (this.collider) {
             this.collider.on(Contact2DType.BEGIN_CONTACT, this.onCollisionEnter, this);
         }
     }
 
-    onCollisionEnter(self: BoxCollider2D, other:CircleCollider2D){
-        console.log("onCollect");
+    onCollisionEnter(self: BoxCollider2D, other: CircleCollider2D) {
         let whoCollided = other.node.getComponent(GameObject);
-        if (whoCollided.objectType == (GameObjectType.Player || GameObjectType.Enemy) &&
+        console.log("onCollect: ", self.name, other.name);
+        if (whoCollided && whoCollided.objectType == GameObjectType.Player ||
+            whoCollided.objectType == GameObjectType.Enemy &&
             this.curState == CollectibleState.Idle
-        ){
+        ) {
             let player = whoCollided.node.getComponent(CarController);
             if (player.curState == CarState.Dead) return;
             this.curState = CollectibleState.Collecting;
@@ -52,9 +56,10 @@ export default class BoosterItem extends Component {
     }
 
     update(deltaTime: number) {
-        switch (this.curState){
+        switch (this.curState) {
             case CollectibleState.Idle:
-                if (this.timeActive > 0){
+                this.pointText.string = this.pointGiving.toString();
+                if (this.timeActive > 0) {
                     this.timeActive -= deltaTime;
                 }
                 else {
@@ -65,7 +70,7 @@ export default class BoosterItem extends Component {
                 this.setHide(true);
                 break;
             case CollectibleState.Hidding:
-                
+
                 break;
         }
     }
@@ -85,32 +90,32 @@ export default class BoosterItem extends Component {
     }
 
     setHide(isHiding: boolean) {
-        if (isHiding){
+        if (isHiding) {
             this.disableCollider();
             BoosterSpawner.instance.currentBoosterCount--;
         }
-        else{
+        else {
             this.rePosition();
             this.enableCollider();
             BoosterSpawner.instance.currentBoosterCount++;
         }
         this.curState = isHiding ? CollectibleState.Hidding : CollectibleState.Idle;
 
-        this.visual.opacity = isHiding ? 0 : 255;
+        this.texture.opacity = isHiding ? 0 : 255;
     }
 
     onDestroy() {
-        if (this.collider){
+        if (this.collider) {
             this.collider.off(Contact2DType.BEGIN_CONTACT, this.onCollisionEnter, this);
         }
     }
 
-    enableCollider(){
+    enableCollider() {
         if (!this.collider) return;
         this.collider.enabled = true;
     }
 
-    disableCollider(){
+    disableCollider() {
         if (!this.collider) return;
         this.collider.enabled = false;
     }
