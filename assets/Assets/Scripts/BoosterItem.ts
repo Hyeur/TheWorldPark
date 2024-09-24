@@ -1,8 +1,9 @@
 import { _decorator, BoxCollider2D, CircleCollider2D, Component, Contact2DType, ECollider2DType, Label, Node, UIOpacity } from 'cc';
 import { GameObject, GameObjectType } from './GameObject';
-import { CarController, CarState } from './CarController';
+import { CarController, CarControllerState } from './CarController';
 import { ConstConfig } from './Utils/ConstConfig';
 import { BoosterSpawner } from './BoosterSpawner';
+import { CarStat } from './CarStat';
 const { ccclass, property } = _decorator;
 
 export enum CollectibleState {
@@ -49,9 +50,12 @@ export default class BoosterItem extends Component {
             whoCollided.objectType == GameObjectType.Enemy &&
             this.curState == CollectibleState.Idle
         ) {
-            let player = whoCollided.node.getComponent(CarController);
-            if (player.curState == CarState.Dead) return;
+            let playerCarController = whoCollided.node.getComponent(CarController);
+            let playerStat = playerCarController.node.getComponent(CarStat);
+            if (playerCarController.curState == CarControllerState.Dead) return;
             this.curState = CollectibleState.Collecting;
+            playerStat.changeCarPoint(this.pointGiving);
+            
         }
     }
 

@@ -1,21 +1,24 @@
-import { _decorator, Component, Contact2DType, IPhysics2DContact, Vec2, tween, RigidBody2D, Vec3, Node, CircleCollider2D, Quat, BoxCollider2D, Collider2D, ECollider2DType } from 'cc';
+import { _decorator, Component, Contact2DType, IPhysics2DContact, Vec2, tween, RigidBody2D, Vec3, Node, CircleCollider2D, Quat, BoxCollider2D, Collider2D, ECollider2DType, CollisionEventType, ICollisionEvent } from 'cc';
 import { CarController } from './CarController';
 import { macro } from 'cc';
 import { GameObject, GameObjectType } from './GameObject';
 import { Skill, SkillManager } from './SkillManager';
+import { GameManager } from './GameManager';
+import { CarStat } from './CarStat';
+
+export enum CarCollisionState{
+    Unknown,
+    Staying
+}
 
 const { ccclass, property } = _decorator;
 
 @ccclass('CarCollisionHandler')
 export class CarCollisionHandler extends Component {
-    private carColliders: CircleCollider2D[] = [];
-
-    public getCarColliders(): CircleCollider2D[] {
-        return this.carColliders;
-    }
-    public addCarCollider(collider: CircleCollider2D) {
-        this.carColliders.push(collider);
-    }
+    @property
+    minCapturingInSeconds: number = 1;
+    @property
+    maxCapturingInSeconds: number = 3;
 
     @property
     pushBackForce: number = 150;
@@ -24,7 +27,7 @@ export class CarCollisionHandler extends Component {
     stunDuration: number = 1;
 
     @property
-    collisionCooldown: number = 0.5; // Cooldown time in seconds
+    collisionCooldown: number = 0.5;
     @property(Node)
     private frontCar: Node = null!;
     private carController: CarController = null!;
@@ -35,6 +38,18 @@ export class CarCollisionHandler extends Component {
     private lastContactPoint: Vec2 = null;
 
     private isCollisionStaying: Boolean = false;
+
+    private curCollisionState: CarCollisionState = CarCollisionState.Unknown;
+
+    private carColliders: CircleCollider2D[] = [];
+
+    public getCarColliders(): CircleCollider2D[] {
+        return this.carColliders;
+    }
+    public addCarCollider(collider: CircleCollider2D) {
+        this.carColliders.push(collider);
+    }
+
     start() {
         this.carController = this.getComponent(CarController)!;
         this.rigidbody = this.node.getComponent(RigidBody2D)!;
@@ -61,7 +76,7 @@ export class CarCollisionHandler extends Component {
     }
 
     onEnable() {
-        this.enableCollisionListeners();
+        
     }
 
     onDisable() {
@@ -91,6 +106,7 @@ export class CarCollisionHandler extends Component {
     private enableCollisionListeners() {
         this.carColliders.forEach(collider => {
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
+            collider.on(Contact2DType.PRE_SOLVE, this.onStayingContactCar, this);
             collider.on(Contact2DType.END_CONTACT, this.onEndContactCar, this);
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
@@ -99,59 +115,79 @@ export class CarCollisionHandler extends Component {
     private disableCollisionListeners() {
         this.carColliders.forEach(collider => {
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
+            collider.off(Contact2DType.PRE_SOLVE, this.onStayingContactCar, this);
             collider.off(Contact2DType.END_CONTACT, this.onEndContactCar, this);
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
     }
 
-    update(dt: number){
-        if (SkillManager.instance.GetIsSkillConnected(Skill.Immortal))
-        {
-            this.deActiveSelfColliders();
-        }
-        else this.reActiveSelfColliders();
-    }
-    
+
     onBeginContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null) {
+        let selfCarStat = this.node.getComponent(CarStat);
+        let otherNode = otherCollider.node;
+        let otherCarHandler = otherNode.getComponent(CarCollisionHandler);
+        let otherControler = otherNode.getComponent(CarController);
+        let otherCarStat = otherNode.getComponent(CarStat);
+        
+        if (otherCollider.TYPE != ECollider2DType.CIRCLE &&
+            otherNode.getComponent(GameObject).objectType != GameObjectType.Player ||
+            otherNode.getComponent(GameObject).objectType != GameObjectType.Enemy) return;
+
+        if (this.checkIsInImmortalSKill()) return;
+
+        //capturing
+        let pointsDiffRate = GameManager.instance.calculatePointDiffRate(selfCarStat.curPoint,otherCarStat.curPoint);
+        if (pointsDiffRate != 0) return;
+
         const currentTime = Date.now() / 1000; // Current time in seconds
-        if (currentTime - this.lastCollisionTime < this.collisionCooldown) {
-            return; // Exit if still in cooldown
-        }
+        // Exit if still in collision cooldown
+        if (currentTime - this.lastCollisionTime < this.collisionCooldown) return;
         this.lastCollisionTime = currentTime;
-        if (otherCollider.node.getComponent(CarController)) {
-            if (otherCollider.TYPE == ECollider2DType.CIRCLE &&
-                 otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Player ||
-                 otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Enemy) {
-                
-                
-                console.log("onBeginContactCar: ",selfCollider.name, otherCollider.name);
-                this.isCollisionStaying = true;
-                // Stun both cars
-                this.stunCar(this.carController);
-                this.stunCar(otherCollider.node.getComponent(CarController)!);
 
-                // Calculate push back direction
-                const pushDirection = otherCollider.node.worldPosition.subtract(selfCollider.node.worldPosition).normalize();
-                const pushDistance = pushDirection.multiplyScalar(this.pushBackForce); // Adjust distance based on force
+        //main collision
+        if (otherControler) {
+            console.log("onBeginContactCar: ", selfCollider.name, otherCollider.name);
+            this.isCollisionStaying = true;
+            // Stun both cars
+            this.stunCar(this.carController);
+            this.stunCar(otherControler!);
 
-                let otherCarHandler = otherCollider.node.getComponent(CarCollisionHandler);
+            // Calculate push back direction
+            const pushDirection = otherNode.worldPosition.subtract(selfCollider.node.worldPosition).normalize();
+            const pushDistance = pushDirection.multiplyScalar(this.pushBackForce); // Adjust distance based on force
 
-                let selfCenterPoint = new Vec2(this.node.worldPosition.x, this.node.worldPosition.y);
-                let otherCenterPoint = new Vec2(otherCarHandler.node.worldPosition.x, otherCarHandler.node.worldPosition.y);
-                let selfPoint = selfCenterPoint.subtract(selfCollider.worldPosition).multiplyScalar(1 / 2);
-                let otherPoint = otherCenterPoint.subtract(otherCollider.worldPosition).multiplyScalar(1 / 2);
-                this.rigidbody.applyForce(new Vec2(-pushDistance.x, -pushDistance.y), selfPoint, true);
-                otherCarHandler?.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y), otherPoint, true);
-                
-            }
+
+            let selfCenterPoint = new Vec2(this.node.worldPosition.x, this.node.worldPosition.y);
+            let otherCenterPoint = new Vec2(otherNode.worldPosition.x, otherNode.worldPosition.y);
+            let selfPoint = selfCenterPoint.subtract(selfCollider.worldPosition).multiplyScalar(1 / 2);
+            let otherPoint = otherCenterPoint.subtract(otherCollider.worldPosition).multiplyScalar(1 / 2);
+            this.rigidbody.applyForce(new Vec2(-pushDistance.x, -pushDistance.y), selfPoint, true);
+            otherCarHandler?.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y), otherPoint, true);
         }
     }
-    onEndContactCar(){
-        this.isCollisionStaying = false;
+
+    onStayingContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null){
+        console.log("collison staying");
+        let selfCarStat = this.node.getComponent(CarStat);
+        let otherNode = otherCollider.node;
+        let otherCarHandler = otherNode.getComponent(CarCollisionHandler);
+        let otherControler = otherNode.getComponent(CarController);
+        let otherCarStat = otherNode.getComponent(CarStat);
+        
+        if (otherCollider.TYPE != ECollider2DType.CIRCLE &&
+            otherNode.getComponent(GameObject).objectType != GameObjectType.Player ||
+            otherNode.getComponent(GameObject).objectType != GameObjectType.Enemy) return;
+
+            
+        console.log("collison staying");
     }
-    onBeginContactBound(selfCollider: CircleCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
+    onEndContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D) {
+        this.isCollisionStaying = false;
+        this.curCollisionState = CarCollisionState.Unknown;
+    }
+    onBeginContactBound(selfCollider: CircleCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null) {
         if (selfCollider.TYPE == ECollider2DType.CIRCLE && otherCollider.TYPE == ECollider2DType.BOX &&
-             otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Bounds){
+            otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Bounds) {
             console.log("wall contact", selfCollider.name, otherCollider.name);
             // Stun both cars
             this.stunCar(this.carController);
@@ -201,12 +237,22 @@ export class CarCollisionHandler extends Component {
         return new Vec2(direction.x, direction.y);
     }
 
-    public deActiveSelfColliders()
-    {
+    public deActiveSelfColliders() {
         this.carColliders.forEach(coll => coll.enabled = false);
     }
-    public reActiveSelfColliders()
-    {
+    public reActiveSelfColliders() {
         this.carColliders.forEach(coll => coll.enabled = true);
+    }
+
+    checkIsInImmortalSKill(): boolean {
+        return SkillManager.instance.GetIsSkillConnected(Skill.Immortal);
+    }
+    update(dt: number) {
+        switch (this.curCollisionState){
+            case CarCollisionState.Staying:
+                break;
+            case CarCollisionState.Unknown:
+                break;
+        }
     }
 }

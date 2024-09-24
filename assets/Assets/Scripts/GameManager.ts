@@ -54,6 +54,15 @@ export class GameManager extends Component {
             this.playerCarController = carController;
         }
     }
+    public calculatePointDiffRate(selfPoint: number, enemyPoint: number): number{
+        return (selfPoint - enemyPoint) / 90;
+    }
+
+
+
+
+
+
 
     onDestroy() {
         if (GameManager._instance === this) {
@@ -62,4 +71,5 @@ export class GameManager extends Component {
         this.node.destroy();
         console.log("GameManager destroyed");
     }
+
 }

@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "Point",
+    "_name": "PointVisual",
     "_objFlags": 0,
     "_native": "",
     "data": {
@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Point",
+    "_name": "PointVisual",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -28,14 +28,20 @@
       },
       {
         "__id__": 6
+      },
+      {
+        "__id__": 8
+      },
+      {
+        "__id__": 10
       }
     ],
     "_prefab": {
-      "__id__": 8
+      "__id__": 12
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 2.002,
+      "x": 0,
       "y": 0,
       "z": 0
     },
@@ -74,8 +80,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 37.4,
-      "height": 61.239999999999995
+      "width": 55.849999999999994,
+      "height": 46.12
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -109,17 +115,17 @@
       "b": 20,
       "a": 255
     },
-    "_string": "5",
-    "_horizontalAlign": 2,
-    "_verticalAlign": 2,
-    "_actualFontSize": 31.6,
-    "_fontSize": 31.6,
+    "_string": "10",
+    "_horizontalAlign": 1,
+    "_verticalAlign": 1,
+    "_actualFontSize": 28.6,
+    "_fontSize": 28.6,
     "_fontFamily": "Arial",
-    "_lineHeight": 44.4,
+    "_lineHeight": 32.7,
     "_overflow": 0,
     "_enableWrapText": true,
     "_font": {
-      "__uuid__": "e4e3f81e-7aa1-4975-aaac-08914ff8f45a",
+      "__uuid__": "d1fa67d8-f21c-4710-84d1-96e53636e009",
       "__expectedType__": "cc.TTFFont"
     },
     "_isSystemFontUsed": false,
@@ -159,6 +165,41 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "fc6oc50hBPq4m9iF0p+vLT"
+  },
+  {
+    "__type__": "5d116bqs2FO8Lof0hNlqdfR",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 9
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "afKPUqZaZNLrih6TuIcPRR"
+  },
+  {
+    "__type__": "6fa06UwAHNEJoKBdH0IZbzf",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 11
+    },
+    "objectType": 6,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "daanc33ZNJa5QEOTGxrBTQ"
   },
   {
     "__type__": "cc.PrefabInfo",

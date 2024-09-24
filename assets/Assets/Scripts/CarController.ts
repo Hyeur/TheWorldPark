@@ -3,7 +3,7 @@ import { SkillManager, Skill } from './SkillManager';
 import { CarCollisionHandler } from './CarCollisionHandler';
 const { ccclass, property } = _decorator;
 
-export enum CarState {
+export enum CarControllerState {
     Idle,
     Running,
     Turboing,
@@ -42,7 +42,7 @@ export class CarController extends Component {
     protected stunDurationInSeconds: number = 1;
 
 
-    public curState: CarState = CarState.Idle;
+    public curState: CarControllerState = CarControllerState.Idle;
 
     ////////////////bonus//////////////////
     protected _bonusSpeedRatio: number = 1.2;
@@ -145,7 +145,7 @@ export class CarController extends Component {
         }
         
         if (!direction) direction = this._curMomentumDirection;
-        if (direction == Vec2.ZERO) this.curState = CarState.Running;
+        if (direction == Vec2.ZERO) this.curState = CarControllerState.Running;
         
         //normal speed
         let curSpeed = this._curSpeed;
@@ -154,7 +154,7 @@ export class CarController extends Component {
         //bonus speed
         if (this.IsSkillConnected(Skill.BonusSpeed)) {
             curSpeed *= this._bonusSpeedRatio;
-            this.curState = CarState.Turboing;
+            this.curState = CarControllerState.Turboing;
         }
 
         //magnet
@@ -299,7 +299,7 @@ export class CarController extends Component {
 
     setStunned(stunned: boolean) {
         this.isStunned = stunned;
-        this.curState = CarState.Stunned;
+        this.curState = CarControllerState.Stunned;
         if (!stunned)
         {
             this._curMomentumDirection = Vec2.ZERO;
