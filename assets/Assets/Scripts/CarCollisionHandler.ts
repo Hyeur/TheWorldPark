@@ -5,6 +5,7 @@ import { GameObject, GameObjectType } from './GameObject';
 import { Skill, SkillManager } from './SkillManager';
 import { GameManager } from './GameManager';
 import { CarStat } from './CarStat';
+import { ConstConfig } from './Utils/ConstConfig';
 
 export enum CarCollisionState{
     Unknown,
@@ -16,9 +17,9 @@ const { ccclass, property } = _decorator;
 @ccclass('CarCollisionHandler')
 export class CarCollisionHandler extends Component {
     @property
-    minCapturingInSeconds: number = 1;
-    @property
     maxCapturingInSeconds: number = 3;
+    @property
+    minCapturingInSeconds: number = 1;
 
     @property
     pushBackForce: number = 150;
@@ -49,6 +50,10 @@ export class CarCollisionHandler extends Component {
     private attackingValue: number = 0;
 
     private _deltaTime: number = 0;
+
+    private _capturingPointPerFrame: number = 0;
+
+    private debugBoolean: boolean = false;
 
     public getCarColliders(): CircleCollider2D[] {
         return this.carColliders;
@@ -117,16 +122,20 @@ export class CarCollisionHandler extends Component {
             collider.on(Contact2DType.END_CONTACT, this.onEndContactCar, this);
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
+        this.carHitBoxCollider.on(Contact2DType.BEGIN_CONTACT, this.onBeginAttackingContactCar, this);
         this.carHitBoxCollider.on(Contact2DType.PRE_SOLVE, this.onAttackingContactCar, this);
+        this.carHitBoxCollider.on(Contact2DType.END_CONTACT, this.onEndAttackingContactCar, this);
     }
-
+    
     private disableCollisionListeners() {
         this.carColliders.forEach(collider => {
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
             collider.off(Contact2DType.END_CONTACT, this.onEndContactCar, this);
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
-        this.carHitBoxCollider.on(Contact2DType.PRE_SOLVE, this.onAttackingContactCar, this);
+        this.carHitBoxCollider.off(Contact2DType.BEGIN_CONTACT, this.onBeginAttackingContactCar, this);
+        this.carHitBoxCollider.off(Contact2DType.PRE_SOLVE, this.onAttackingContactCar, this);
+        this.carHitBoxCollider.off(Contact2DType.END_CONTACT, this.onEndAttackingContactCar, this);
     }
 
 
@@ -173,6 +182,14 @@ export class CarCollisionHandler extends Component {
             otherCarHandler?.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y), otherPoint, true);
         }
     }
+    onBeginAttackingContactCar(selfCollider: BoxCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
+        let selfCarStat = this.node.getComponent(CarStat);
+        let otherNode = otherCollider.node;
+        let otherCarStat = otherNode.getComponent(CarStat);
+
+        let pointsDiffRate = GameManager.instance.calculatePointDiffRate(selfCarStat.curPoint,otherCarStat.curPoint);
+        this._capturingPointPerFrame = this.calculatePointCapturingPerFrame(pointsDiffRate, this.minCapturingInSeconds, this.maxCapturingInSeconds, this._deltaTime);
+    }
 
     onAttackingContactCar(selfCollider: BoxCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
         
@@ -187,17 +204,19 @@ export class CarCollisionHandler extends Component {
             otherNode.getComponent(GameObject).objectType != GameObjectType.Enemy) return;
 
         let pointsDiffRate = GameManager.instance.calculatePointDiffRate(selfCarStat.curPoint,otherCarStat.curPoint);
-        if (pointsDiffRate == 0) return;
         
-        if (selfCarStat.curPoint > 0 && otherCarStat.curPoint > 0){
-            console.count("attcking");
-            let value = 1;
-            Math.round(value);
-            Math.floor(value);
-            selfCarStat.changeCarPoint(value);
-            otherCarStat.changeCarPoint(-value);
+        if (pointsDiffRate == 0 || Math.abs(selfCarStat.curPoint - otherCarStat.curPoint) >= ConstConfig.CARSTAT.DEFAUT_PARAM.maxPoint) {
+            return;
         }
-        console.log("collison staying");
+        
+        if (selfCarStat.curPoint + this._capturingPointPerFrame > 1 && otherCarStat.curPoint + this._capturingPointPerFrame > 1){
+            console.log("collison staying - packed = :", this._capturingPointPerFrame);
+            selfCarStat.changeCarPoint(this._capturingPointPerFrame, true);
+            otherCarStat.changeCarPoint(-this._capturingPointPerFrame, false);
+        }
+    }
+    onEndAttackingContactCar(selfCollider: BoxCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
+        this._capturingPointPerFrame = 0;
     }
     onEndContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D) {
         this.isCollisionStaying = false;
@@ -279,6 +298,14 @@ export class CarCollisionHandler extends Component {
             case CarCollisionState.Unknown:
                 break;
         }
+    }
+
+    calculatePointCapturingPerFrame(diffRate: number, minCapturingInSec: number, maxCapturingInSec: number, dt?: number): number{
+        let r = (
+                diffRate * (ConstConfig.CARSTAT.DEFAUT_PARAM.maxPoint - ConstConfig.CARSTAT.DEFAUT_PARAM.startingPoint)) /
+                (60 * (diffRate * (maxCapturingInSec - minCapturingInSec) + 1)
+            );
+        return r;
     }
 
     onCapturing(selfPoint:number, otherPoint:number) {

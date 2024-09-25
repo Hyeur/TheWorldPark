@@ -175,8 +175,6 @@ export class CarController extends Component {
         //car move
         const posWS = this.node.getPosition();
         let moveDelta = new Vec2(direction.x, direction.y).multiplyScalar(curSpeed * deltaTime * FORCE_CONSTANT);
-        console.log(curSpeed);
-        console.log(direction);
         // this.node.setPosition(posWS.add(new Vec3(moveDelta.x, moveDelta.y, 0)));
         this.rigidbody.applyForceToCenter(moveDelta, true); // Changed from function call to property assignment
     }
@@ -302,8 +300,8 @@ export class CarController extends Component {
 
     onDestroy() {
         this.removeInputListeners();
+        console.log("CarController destroyed:", this.node.name);
         this.node.destroy();
-        console.log("CarController destroyed");
     }
 
     private removeInputListeners() {

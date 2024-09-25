@@ -55,7 +55,7 @@ export default class BoosterItem extends Component {
             let playerStat = playerCarController.node.getComponent(CarStat);
             if (playerCarController.curState == CarControllerState.Dead) return;
             this.curState = CollectibleState.Collecting;
-            playerStat.changeCarPoint(this.pointGiving);
+            playerStat.changeCarPoint(this.pointGiving, true);
             
         }
     }
