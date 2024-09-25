@@ -1,4 +1,4 @@
-import { _decorator, Component, Vec2, Vec3, input, Input, EventKeyboard, KeyCode } from 'cc';
+import { _decorator, Component, Vec2, Vec3, input, Input, EventKeyboard, KeyCode, RigidBody2D, clamp01, CircleCollider2D } from 'cc';
 import { SkillManager, Skill } from './SkillManager';
 import { CarCollisionHandler } from './CarCollisionHandler';
 const { ccclass, property } = _decorator;
@@ -10,6 +10,8 @@ export enum CarControllerState {
     Stunned,
     Dead
 }
+
+const FORCE_CONSTANT = 25;
 @ccclass('CarController')
 export class CarController extends Component {
     @property
@@ -25,8 +27,11 @@ export class CarController extends Component {
 
     @property
     rotationLerpSpeed: number = 5; // New property for controlling rotation smoothness
+
+    private t: number = 0;
     private skillManager: SkillManager | null = null;
     private CarCollisionHandler: CarCollisionHandler | null = null;
+    private rigidbody: RigidBody2D | null = null;
     private _isLocalPlayer: boolean = false;
     protected direction: Vec2 = new Vec2(0, 1);
     protected movement: { [key: string]: boolean } = {
@@ -34,7 +39,7 @@ export class CarController extends Component {
     };
     protected _curSpeed: number = 0;
     protected _curMomentumDirection: Vec2 = new Vec2(0, 0);
-    public set curDirection(value: Vec2) {
+    public set curMomentumDirection(value: Vec2) {
         this._curMomentumDirection = value;
     }
     private _isDead: boolean = false;
@@ -92,6 +97,7 @@ export class CarController extends Component {
             this.skillManager = SkillManager.instance;
         }
         this.CarCollisionHandler = this.node.getComponent(CarCollisionHandler);
+        this.rigidbody = this.node.getComponent(RigidBody2D);
         this.initializeState();
     }
 
@@ -129,8 +135,13 @@ export class CarController extends Component {
     }
 
     public updateVisual(direction?: Vec2): void {
-        if (this.isStunned) return;
         if (!direction) direction = this._curMomentumDirection;
+
+        if (this.isStunned){
+            return;
+        }
+
+
         if (direction.x !== 0 || direction.y !== 0) {
             // Calculate the angle based on the direction vector
             const angle = Math.atan2(direction.x, direction.y) * (180 / Math.PI);
@@ -145,7 +156,7 @@ export class CarController extends Component {
         }
         
         if (!direction) direction = this._curMomentumDirection;
-        if (direction == Vec2.ZERO) this.curState = CarControllerState.Running;
+        if (direction != Vec2.ZERO) this.curState = CarControllerState.Running;
         
         //normal speed
         let curSpeed = this._curSpeed;
@@ -163,9 +174,11 @@ export class CarController extends Component {
 
         //car move
         const posWS = this.node.getPosition();
-        let moveDelta = new Vec2(direction.x, direction.y).multiplyScalar(curSpeed * deltaTime);
-        //console.log(curSpeed);
-        this.node.setPosition(posWS.add(new Vec3(moveDelta.x, moveDelta.y, 0)));
+        let moveDelta = new Vec2(direction.x, direction.y).multiplyScalar(curSpeed * deltaTime * FORCE_CONSTANT);
+        console.log(curSpeed);
+        console.log(direction);
+        // this.node.setPosition(posWS.add(new Vec3(moveDelta.x, moveDelta.y, 0)));
+        this.rigidbody.applyForceToCenter(moveDelta, true); // Changed from function call to property assignment
     }
 
     public connectSkill(skill: Skill, apply: boolean = true): void {
@@ -204,9 +217,9 @@ export class CarController extends Component {
             this.updateSkillDurations(deltaTime);
         }
 
-        this.updateCurrentSpeed(this._curMomentumDirection, deltaTime);
-        this.applyMovement(deltaTime, this._curMomentumDirection, this._curSpeed);
         this.updateCurrentMomentumDirection(deltaTime);
+        this.updateCurrentSpeed(deltaTime);
+        this.applyMovement(deltaTime, this._curMomentumDirection, this._curSpeed);
         this.updateVisual();
 
     }
@@ -229,29 +242,48 @@ export class CarController extends Component {
         if (this.isLocalPlayer) {
             targetMomentumDirection = this.LocalCalculateTargetMomentumDirection();
         }
-        // if (targetMomentumDirection.x !== 0 || targetMomentumDirection.y !== 0) {
+        else {
+            //debug for AI
+            //targetMomentumDirection = Vec2.ONE;
+        }
+        if (targetMomentumDirection.x !== 0 || targetMomentumDirection.y !== 0) {
             this._curMomentumDirection = new Vec2(
                 this.lerp(this._curMomentumDirection.x, targetMomentumDirection.x, this.rotationLerpSpeed * deltaTime),
                 this.lerp(this._curMomentumDirection.y, targetMomentumDirection.y, this.rotationLerpSpeed * deltaTime)
             );
-        // }
+        }
+        else {
+            this._curMomentumDirection = Vec2.ZERO;
+        }
+
+        //normalize direction
+        this._curMomentumDirection.normalize();
     }
 
-    private updateCurrentSpeed(targetMomentumDirection: Vec2, deltaTime: number) {
+    private updateCurrentSpeed(deltaTime: number) {
         if (this.isStunned)
         {
             this._curSpeed = 0;
             return;
         }
-        if (targetMomentumDirection.x !== 0 || targetMomentumDirection.y !== 0) {
-            this._curSpeed = this.lerp(this._curSpeed, this.maxSpeed, deltaTime * this.acceleration);
-        } else {
-            this._curSpeed = this.lerp(this._curSpeed, 0, deltaTime * this.deceleration);
+        let targetSpeed = (this._curMomentumDirection != Vec2.ZERO)? this.maxSpeed : 0;
+        let targetAccel = (this._curMomentumDirection != Vec2.ZERO)? this.acceleration : this.deceleration;
+        let isLerping = (this._curMomentumDirection != Vec2.ZERO)? true : false;
+
+        if (isLerping){
+            this.t += deltaTime / targetAccel;
+            this._curSpeed = this.lerp(this._curSpeed, targetSpeed, clamp01(this.t));
+
+            if (Math.abs(this._curSpeed - targetSpeed) < 20) {
+                this._curSpeed = targetSpeed;
+                isLerping = false;  // Stop lerping when target is reached
+                this.t = 0;  // Reset lerp factor for next acceleration
+            }
         }
     }
 
     private lerp(start: number, end: number, t: number): number {
-        return start + (end - start) * Math.min(1, t);
+        return start + (end - start) * t;
     }
 
     SetBonusSpeed(bonusSpeedRatio: number, bonusSpeedDurationInSeconds: number): void {
@@ -300,6 +332,8 @@ export class CarController extends Component {
     setStunned(stunned: boolean) {
         this.isStunned = stunned;
         this.curState = CarControllerState.Stunned;
+        this._curMomentumDirection = Vec2.ZERO;
+        this._curSpeed = 0;
         if (!stunned)
         {
             this._curMomentumDirection = Vec2.ZERO;

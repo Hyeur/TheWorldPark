@@ -647,29 +647,6 @@
     "fileId": "1dZzEXAYdMYqz65GcP6/9P"
   },
   {
-    "__type__": "3c345Xgzl1IjKqKv1dbKlBr",
-    "_name": "",
-    "_objFlags": 0,
-    "node": {
-      "__id__": 24
-    },
-    "_enabled": true,
-    "__prefab": {
-      "__id__": 32
-    },
-    "playerNode": {
-      "__id__": 1
-    },
-    "cirCleCollider": {
-      "__id__": 29
-    },
-    "_id": ""
-  },
-  {
-    "__type__": "cc.CompPrefabInfo",
-    "fileId": "9aRbkApl5Eu6LBH6XhfFNT"
-  },
-  {
     "__type__": "cc.RigidBody2D",
     "_name": "",
     "_objFlags": 0,
@@ -678,7 +655,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 34
+      "__id__": 32
     },
     "enabledContactListener": true,
     "bullet": false,
@@ -711,7 +688,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 36
+      "__id__": 34
     },
     "objectType": 5,
     "_id": ""
@@ -719,6 +696,29 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "e0QqaF9ldIbpAIaEg1nLnv"
+  },
+  {
+    "__type__": "3c345Xgzl1IjKqKv1dbKlBr",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 24
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 36
+    },
+    "playerNode": {
+      "__id__": 1
+    },
+    "cirCleCollider": {
+      "__id__": 29
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "14PKR3fu9AmLPJNkv2ugQN"
   },
   {
     "__type__": "cc.PrefabInfo",
@@ -1161,12 +1161,12 @@
     "__prefab": {
       "__id__": 64
     },
-    "startSpeed": 100,
-    "maxSpeed": 500,
-    "acceleration": 70,
-    "deceleration": 20,
-    "rotationSpeed": 180,
-    "rotationLerpSpeed": 3,
+    "startSpeed": 20,
+    "maxSpeed": 250,
+    "acceleration": 25,
+    "deceleration": 50,
+    "rotationSpeed": 240,
+    "rotationLerpSpeed": 5,
     "_id": ""
   },
   {
@@ -1252,19 +1252,19 @@
     "_allowSleep": false,
     "_gravityScale": 0,
     "_linearDamping": 3,
-    "_angularDamping": 150,
+    "_angularDamping": 7,
     "_linearVelocity": {
       "__type__": "cc.Vec2",
       "x": 0,
       "y": 0
     },
-    "_angularVelocity": 0.01,
+    "_angularVelocity": 0,
     "_fixedRotation": false,
     "_id": ""
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "5dwGTiDUZOvqrAf2TtSOwB"
+    "fileId": "88nJMdrGdCvZWuJM+8et5Y"
   },
   {
     "__type__": "fee000scMJC6K5rg428Fjy0",
@@ -1279,7 +1279,7 @@
     },
     "minCapturingInSeconds": 1,
     "maxCapturingInSeconds": 3,
-    "pushBackForce": 500,
+    "pushBackForce": 1000,
     "stunDuration": 1,
     "collisionCooldown": 0.1,
     "frontCar": {
@@ -1302,7 +1302,7 @@
     "__prefab": {
       "__id__": 74
     },
-    "tag": 1,
+    "tag": 99,
     "_group": 8,
     "_density": 1,
     "_sensor": true,
@@ -1407,7 +1407,7 @@
     "_size": {
       "__type__": "cc.Size",
       "width": 31,
-      "height": 57.8
+      "height": 42
     },
     "_id": ""
   },

@@ -640,12 +640,12 @@
     "__prefab": {
       "__id__": 31
     },
-    "startSpeed": 100,
-    "maxSpeed": 500,
-    "acceleration": 70,
-    "deceleration": 20,
-    "rotationSpeed": 180,
-    "rotationLerpSpeed": 3,
+    "startSpeed": 20,
+    "maxSpeed": 250,
+    "acceleration": 25,
+    "deceleration": 50,
+    "rotationSpeed": 240,
+    "rotationLerpSpeed": 5,
     "_id": ""
   },
   {
@@ -758,7 +758,7 @@
     },
     "minCapturingInSeconds": 1,
     "maxCapturingInSeconds": 3,
-    "pushBackForce": 500,
+    "pushBackForce": 1000,
     "stunDuration": 1,
     "collisionCooldown": 0.1,
     "frontCar": {
@@ -886,7 +886,7 @@
     "_size": {
       "__type__": "cc.Size",
       "width": 31,
-      "height": 57.8
+      "height": 42
     },
     "_id": ""
   },
