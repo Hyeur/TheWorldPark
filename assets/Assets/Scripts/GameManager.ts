@@ -66,11 +66,10 @@ export class GameManager extends Component {
     private spawnAI(){
         for (let index = 0; index < this.AICount; index++) {
             let spawnPoint = Tools.RandomPositionInRect(ScreenManager.instance.battleArea);
-            let direction = new Vec2(Tools.RandomRange(-1,1,true), Tools.RandomRange(-1,1,true)).normalize();
+            let direction = new Vec2(Tools.RandomRange(-1,1,true), Tools.RandomRange(-1,1,true));
             const AICar = instantiate(this.AICarPrefab);
             AICar.setParent(this.node);
             AICar.setPosition(new Vec3(spawnPoint.x, spawnPoint.y));
-            AICar.getComponent(AICarController).curMomentumDirection = direction;
         }
     }
     public calculatePointDiffRate(selfPoint: number, enemyPoint: number): number{

@@ -1,15 +1,14 @@
 import { _decorator, Component, Node, Vec3, Camera, CCFloat, Vec2 } from 'cc';
 import { GameManager } from './GameManager';
+import { ScreenManager } from './ScreenManager';
 
 const { ccclass, property, executionOrder } = _decorator;
 
 @ccclass('CameraFollow')
-@executionOrder(2)
+@executionOrder(3)
 export class CameraFollow extends Component {
     @property(Vec3) cameraOffset = new Vec3();
     @property(CCFloat) cameraSmoothing = 0.1;
-    @property(Vec2) xLimit = new Vec2();
-    @property(Vec2) yLimit = new Vec2();
 
     private mainCamera: Node | null = null;
     private playerCar: Node | null = null;
@@ -43,8 +42,8 @@ export class CameraFollow extends Component {
     }
 
     private clampToBounds(position: Vec3): Vec3 {
-        const clampedX = Math.max(this.xLimit.x, Math.min(this.xLimit.y, position.x));
-        const clampedY = Math.max(this.yLimit.x, Math.min(this.yLimit.y, position.y));
+        const clampedX = Math.max(-ScreenManager.instance.battleArea.width/2, Math.min(ScreenManager.instance.battleArea.width/2, position.x));
+        const clampedY = Math.max(-ScreenManager.instance.battleArea.height/2, Math.min(ScreenManager.instance.battleArea.height/2, position.y));
         
         return new Vec3(clampedX, clampedY, position.z);
     }

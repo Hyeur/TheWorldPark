@@ -65,10 +65,13 @@
       },
       {
         "__id__": 64
+      },
+      {
+        "__id__": 66
       }
     ],
     "_prefab": {
-      "__id__": 66
+      "__id__": 68
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -1161,7 +1164,7 @@
     "fileId": "b4WbcYlxFNULbnvaE0eQGw"
   },
   {
-    "__type__": "4cee5kAOPhGw5WYTlpiwDCB",
+    "__type__": "8ab31P5V/BLbJXPWExi+/uO",
     "_name": "",
     "_objFlags": 0,
     "node": {
@@ -1170,6 +1173,29 @@
     "_enabled": true,
     "__prefab": {
       "__id__": 65
+    },
+    "startSpeed": 20,
+    "maxSpeed": 250,
+    "acceleration": 25,
+    "deceleration": 50,
+    "rotationSpeed": 240,
+    "rotationLerpSpeed": 5,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "fbwYApvJZNophKpnY+MjJr"
+  },
+  {
+    "__type__": "4cee5kAOPhGw5WYTlpiwDCB",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 67
     },
     "startSpeed": 20,
     "maxSpeed": 250,

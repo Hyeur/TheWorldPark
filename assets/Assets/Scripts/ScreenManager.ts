@@ -2,7 +2,7 @@ import { _decorator, Component, Node, Rect } from 'cc';
 const { ccclass, property,  executionOrder} = _decorator;
 
 @ccclass('ScreenManager')
-@executionOrder(3)
+@executionOrder(2)
 export class ScreenManager extends Component {
 
     // Singleton setup

@@ -1,8 +1,10 @@
 # Ignore Cocos Creator build files
-build/
 library/
-local/
 temp/
+local/
+build/
+profiles/
+native
 
 # Ignore Cocos Creator log files
 *.log

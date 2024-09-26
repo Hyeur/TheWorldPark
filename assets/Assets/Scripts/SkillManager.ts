@@ -36,13 +36,13 @@ export class SkillManager extends Component {
     }
 
     // Properties
-    @property bonusSpeedRatio: number = 1.5;
-    @property bonusSpeedDurationInSeconds: number = 5;
+    @property bonusSpeedRatio: number = 1.2;
+    @property bonusSpeedDurationInSeconds: number = 3;
     @property bonusSpeedCooldownInSeconds: number = 8;
     @property magnetRadius: number = 100;
     @property magnetDurationInSeconds: number = 7;
     @property magnetCooldownInSeconds: number = 12;
-    @property immortalDurationInSeconds: number = 3;
+    @property immortalDurationInSeconds: number = 2;
     @property immortalCooldownInSeconds: number = 10;
     @property(Node) bonusSpeedUI: Node | null = null;
     @property(Node) magnetUI: Node | null = null;

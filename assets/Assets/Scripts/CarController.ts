@@ -1,6 +1,9 @@
 import { _decorator, Component, Vec2, Vec3, input, Input, EventKeyboard, KeyCode, RigidBody2D, clamp01, CircleCollider2D } from 'cc';
 import { SkillManager, Skill } from './SkillManager';
 import { CarCollisionHandler } from './CarCollisionHandler';
+import { Tools } from './Utils/Tools';
+import { CarStat } from './CarStat';
+import { ConstConfig } from './Utils/ConstConfig';
 const { ccclass, property } = _decorator;
 
 export enum CarControllerState {
@@ -28,11 +31,14 @@ export class CarController extends Component {
     @property
     rotationLerpSpeed: number = 5; // New property for controlling rotation smoothness
 
-    private t: number = 0;
-    private skillManager: SkillManager | null = null;
-    private CarCollisionHandler: CarCollisionHandler | null = null;
-    private rigidbody: RigidBody2D | null = null;
-    private _isLocalPlayer: boolean = false;
+    protected t: number = 0;
+
+    protected maxSpeedPower = 0;
+    protected skillManager: SkillManager | null = null;
+    protected CarCollisionHandler: CarCollisionHandler | null = null;
+    protected CarStat: CarStat | null = null;
+    protected rigidbody: RigidBody2D | null = null;
+    protected _isLocalPlayer: boolean = false;
     protected direction: Vec2 = new Vec2(0, 1);
     protected movement: { [key: string]: boolean } = {
         up: false, down: false, left: false, right: false
@@ -42,8 +48,8 @@ export class CarController extends Component {
     public set curMomentumDirection(value: Vec2) {
         this._curMomentumDirection = value;
     }
-    private _isDead: boolean = false;
-    private _isStunning: boolean = false;
+    protected _isDead: boolean = false;
+    protected _isStunning: boolean = false;
     protected stunDurationInSeconds: number = 1;
 
 
@@ -90,6 +96,8 @@ export class CarController extends Component {
     SetLocalPlayer(value: boolean): void {
         this._isLocalPlayer = value;
     }
+    onLoad() {
+    }
 
     start() {
         if (this.isLocalPlayer) {
@@ -97,16 +105,18 @@ export class CarController extends Component {
             this.skillManager = SkillManager.instance;
         }
         this.CarCollisionHandler = this.node.getComponent(CarCollisionHandler);
+        this.CarStat = this.node.getComponent(CarStat);
         this.rigidbody = this.node.getComponent(RigidBody2D);
         this.initializeState();
+        this.maxSpeedPower = this.maxSpeed * 1.2;
     }
 
-    private setupInputListeners() {
+    protected setupInputListeners() {
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
     }
 
-    private initializeState() {
+    protected initializeState() {
         this._curSpeed = this.startSpeed;
         this._isDead = false;
         this._isStunning = false;
@@ -121,7 +131,7 @@ export class CarController extends Component {
         this.updateMovementState(event.keyCode, false);
     }
 
-    private updateMovementState(keyCode: KeyCode, isPressed: boolean) {
+    protected updateMovementState(keyCode: KeyCode, isPressed: boolean) {
         const keyMap: { [key: number]: string } = {
             [KeyCode.KEY_W]: 'up',
             [KeyCode.KEY_S]: 'down',
@@ -173,6 +183,8 @@ export class CarController extends Component {
         //immortal
 
         //car move
+        if (this.isLocalPlayer) console.log(curSpeed);
+        
         const posWS = this.node.getPosition();
         let moveDelta = new Vec2(direction.x, direction.y).multiplyScalar(curSpeed * deltaTime * FORCE_CONSTANT);
         // this.node.setPosition(posWS.add(new Vec3(moveDelta.x, moveDelta.y, 0)));
@@ -222,11 +234,11 @@ export class CarController extends Component {
 
     }
 
-    // private updateLocalPlayerMovement(deltaTime: number) {
+    // protected updateLocalPlayerMovement(deltaTime: number) {
     //     this.updateCurrentSpeed(this._curMomentumDirection, deltaTime);
     // }
 
-    private LocalCalculateTargetMomentumDirection(): Vec2 {
+    protected LocalCalculateTargetMomentumDirection(): Vec2 {
         let target = new Vec2(0, 0);
         if (this.movement.up) target.y += 1;
         if (this.movement.down) target.y -= 1;
@@ -241,8 +253,7 @@ export class CarController extends Component {
             targetMomentumDirection = this.LocalCalculateTargetMomentumDirection();
         }
         else {
-            //debug for AI
-            //targetMomentumDirection = Vec2.ONE;
+            targetMomentumDirection = this._curMomentumDirection;
         }
         if (targetMomentumDirection.x !== 0 || targetMomentumDirection.y !== 0) {
             this._curMomentumDirection = new Vec2(
@@ -258,7 +269,7 @@ export class CarController extends Component {
         this._curMomentumDirection.normalize();
     }
 
-    private updateCurrentSpeed(deltaTime: number) {
+    protected updateCurrentSpeed(deltaTime: number) {
         if (this.isStunned) {
             this._curSpeed = 0;
             return;
@@ -266,6 +277,7 @@ export class CarController extends Component {
         let targetSpeed = (this._curMomentumDirection != Vec2.ZERO) ? this.maxSpeed : 0;
         let targetAccel = (this._curMomentumDirection != Vec2.ZERO) ? this.acceleration : this.deceleration;
         let isLerping = (this._curMomentumDirection != Vec2.ZERO) ? true : false;
+        targetSpeed = targetSpeed + ((this.CarStat.curPoint / ConstConfig.CARSTAT.DEFAUT_PARAM.maxPoint) * Math.abs((this.maxSpeedPower - this.maxSpeed)));
 
         if (isLerping) {
             this.t += deltaTime / targetAccel;
@@ -279,7 +291,7 @@ export class CarController extends Component {
         }
     }
 
-    private lerp(start: number, end: number, t: number): number {
+    protected lerp(start: number, end: number, t: number): number {
         return start + (end - start) * t;
     }
 
@@ -303,7 +315,7 @@ export class CarController extends Component {
         this.node.destroy();
     }
 
-    private removeInputListeners() {
+    protected removeInputListeners() {
         input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
     }
@@ -312,7 +324,7 @@ export class CarController extends Component {
         return this.skillDurations.get(skill) || 0;
     }
 
-    private updateSkillDurations(deltaTime: number) {
+    protected updateSkillDurations(deltaTime: number) {
         this.skillDurations.forEach((duration, skill) => {
             if (duration > 0) {
                 this.skillDurations.set(skill, duration - deltaTime);
@@ -320,11 +332,11 @@ export class CarController extends Component {
         });
     }
 
-    private IsSkillConnected(skill: Skill): boolean {
+    protected IsSkillConnected(skill: Skill): boolean {
         return SkillManager.instance.GetisSkillConnected(skill);
     }
 
-    private isStunned: boolean = false;
+    protected isStunned: boolean = false;
 
     setStunned(stunned: boolean) {
         this.isStunned = stunned;

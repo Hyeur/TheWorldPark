@@ -6,6 +6,7 @@ import { Skill, SkillManager } from './SkillManager';
 import { GameManager } from './GameManager';
 import { CarStat } from './CarStat';
 import { ConstConfig } from './Utils/ConstConfig';
+import { AICarController } from './AICarController';
 
 export enum CarCollisionState {
     Unknown,
@@ -33,6 +34,8 @@ export class CarCollisionHandler extends Component {
     @property(Node)
     private frontCar: Node = null!;
     private carController: CarController = null!;
+
+    private AIController: AICarController = null;
     private rigidbody: RigidBody2D = null!;
 
     private lastCollisionTime: number = 0;
@@ -66,6 +69,7 @@ export class CarCollisionHandler extends Component {
 
     start() {
         this.carController = this.getComponent(CarController)!;
+        this.AIController = this.getComponent(AICarController);
         this.rigidbody = this.node.getComponent(RigidBody2D)!;
         this.carColliders = this.node.getComponents(CircleCollider2D);
         this.carHitBoxCollider = this.node.getComponent(BoxCollider2D);
@@ -124,7 +128,7 @@ export class CarCollisionHandler extends Component {
         this.carColliders.forEach(collider => {
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
             collider.on(Contact2DType.END_CONTACT, this.onEndContactCar, this);
-            // collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
+            collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
         this.carHitBoxCollider.on(Contact2DType.BEGIN_CONTACT, this.onBeginAttackingContactCar, this);
         this.carHitBoxCollider.on(Contact2DType.PRE_SOLVE, this.onAttackingContactCar, this);
@@ -135,7 +139,7 @@ export class CarCollisionHandler extends Component {
         this.carColliders.forEach(collider => {
             collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactCar, this);
             collider.off(Contact2DType.END_CONTACT, this.onEndContactCar, this);
-            // collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
+            collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContactBound, this);
         });
         this.carHitBoxCollider.off(Contact2DType.BEGIN_CONTACT, this.onBeginAttackingContactCar, this);
         this.carHitBoxCollider.off(Contact2DType.PRE_SOLVE, this.onAttackingContactCar, this);
@@ -188,7 +192,6 @@ export class CarCollisionHandler extends Component {
 
             this.rigidbody.applyLinearImpulse(new Vec2(-pushDistance.x, -pushDistance.y), selfCenterPoint, true);
             otherCarHandler?.rigidbody.applyLinearImpulse(new Vec2(pushDistance.x, pushDistance.y), otherPoint, true);
-
             // Stun both cars
             this.stunCar(this.carController);
             this.stunCar(otherControler);
@@ -256,19 +259,12 @@ export class CarCollisionHandler extends Component {
         this.curCollisionState = CarCollisionState.Unknown;
     }
     onBeginContactBound(selfCollider: CircleCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null) {
-        return;
         if (selfCollider.TYPE == ECollider2DType.CIRCLE && otherCollider.TYPE == ECollider2DType.BOX &&
             otherCollider.node.getComponent(GameObject).objectType == GameObjectType.Bounds) {
             console.log("wall contact", selfCollider.name, otherCollider.name);
-            // Stun both cars
-            this.stunCar(this.carController);
-
-            // Calculate push back direction
-            const pushDirection = this.getLookDirection();
-            const pushDistance = pushDirection.multiplyScalar(this.pushBackForce); // Adjust distance based on force
-
-
-            this.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y).multiplyScalar(-5), new Vec2(this.node.worldPosition.x, this.node.worldPosition.y), true);
+            
+            this.AIController?.changeOppositeDirection();
+            
         }
     }
 
