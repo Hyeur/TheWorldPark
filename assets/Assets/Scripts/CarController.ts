@@ -62,7 +62,7 @@ export class CarController extends Component {
     }
     protected get isStunning(): boolean {
         return this._isStunning;
-    }    
+    }
     public get isLocalPlayer(): boolean {
         return this._isLocalPlayer;
     }
@@ -137,7 +137,7 @@ export class CarController extends Component {
     public updateVisual(direction?: Vec2): void {
         if (!direction) direction = this._curMomentumDirection;
 
-        if (this.isStunned){
+        if (this.isStunned) {
             return;
         }
 
@@ -154,10 +154,10 @@ export class CarController extends Component {
         if (this.isPlayerDie() || this.isStunned) {
             return;
         }
-        
+
         if (!direction) direction = this._curMomentumDirection;
         if (direction != Vec2.ZERO) this.curState = CarControllerState.Running;
-        
+
         //normal speed
         let curSpeed = this._curSpeed;
         if (speed) curSpeed = speed;
@@ -259,16 +259,15 @@ export class CarController extends Component {
     }
 
     private updateCurrentSpeed(deltaTime: number) {
-        if (this.isStunned)
-        {
+        if (this.isStunned) {
             this._curSpeed = 0;
             return;
         }
-        let targetSpeed = (this._curMomentumDirection != Vec2.ZERO)? this.maxSpeed : 0;
-        let targetAccel = (this._curMomentumDirection != Vec2.ZERO)? this.acceleration : this.deceleration;
-        let isLerping = (this._curMomentumDirection != Vec2.ZERO)? true : false;
+        let targetSpeed = (this._curMomentumDirection != Vec2.ZERO) ? this.maxSpeed : 0;
+        let targetAccel = (this._curMomentumDirection != Vec2.ZERO) ? this.acceleration : this.deceleration;
+        let isLerping = (this._curMomentumDirection != Vec2.ZERO) ? true : false;
 
-        if (isLerping){
+        if (isLerping) {
             this.t += deltaTime / targetAccel;
             this._curSpeed = this.lerp(this._curSpeed, targetSpeed, clamp01(this.t));
 
@@ -329,13 +328,18 @@ export class CarController extends Component {
 
     setStunned(stunned: boolean) {
         this.isStunned = stunned;
-        this.curState = CarControllerState.Stunned;
         this._curMomentumDirection = Vec2.ZERO;
-        this._curSpeed = 0;
-        if (!stunned)
-        {
+        this.curState = CarControllerState.Stunned;
+
+        if (!stunned) {
             this._curMomentumDirection = Vec2.ZERO;
             this._curSpeed = 0;
+            if (this.rigidbody) {
+                this.rigidbody.linearDamping = 3;
+            }
+        }
+        else {
+
         }
     }
 }

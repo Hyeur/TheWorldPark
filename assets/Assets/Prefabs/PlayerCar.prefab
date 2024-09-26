@@ -1190,7 +1190,7 @@
     "_density": 1,
     "_sensor": true,
     "_friction": 1,
-    "_restitution": 5,
+    "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -1220,7 +1220,7 @@
     "_density": 1,
     "_sensor": true,
     "_friction": 1,
-    "_restitution": 5,
+    "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -1252,14 +1252,14 @@
     "_allowSleep": false,
     "_gravityScale": 0,
     "_linearDamping": 3,
-    "_angularDamping": 7,
+    "_angularDamping": 1,
     "_linearVelocity": {
       "__type__": "cc.Vec2",
       "x": 0,
       "y": 0
     },
     "_angularVelocity": 0,
-    "_fixedRotation": false,
+    "_fixedRotation": true,
     "_id": ""
   },
   {
@@ -1277,9 +1277,9 @@
     "__prefab": {
       "__id__": 72
     },
-    "minCapturingInSeconds": 1,
     "maxCapturingInSeconds": 3,
-    "pushBackForce": 1000,
+    "minCapturingInSeconds": 1,
+    "pushBackForce": 1200,
     "stunDuration": 1,
     "collisionCooldown": 0.1,
     "frontCar": {
@@ -1302,12 +1302,12 @@
     "__prefab": {
       "__id__": 74
     },
-    "tag": 99,
+    "tag": 1,
     "_group": 8,
     "_density": 1,
     "_sensor": true,
     "_friction": 1,
-    "_restitution": 5,
+    "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,

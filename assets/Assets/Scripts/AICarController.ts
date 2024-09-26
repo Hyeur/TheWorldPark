@@ -5,7 +5,7 @@ const { ccclass, property } = _decorator;
 @ccclass('AICarController')
 export class AICarController extends CarController {
     start() {
-
+        
     }
 
     update(deltaTime: number) {

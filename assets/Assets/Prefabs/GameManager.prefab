@@ -223,8 +223,12 @@
     "__prefab": {
       "__id__": 11
     },
-    "carPrefab": {
+    "playerCarPrefab": {
       "__uuid__": "2c2ebbf4-1fa5-4ed6-8cd5-dcd17e7dc6a9",
+      "__expectedType__": "cc.Prefab"
+    },
+    "AICarPrefab": {
+      "__uuid__": "afaa5dae-a923-444f-b6d0-e7a096670bdb",
       "__expectedType__": "cc.Prefab"
     },
     "playerCar": null,
@@ -232,6 +236,7 @@
     "playerSpawnPoint": {
       "__id__": 2
     },
+    "AICount": 5,
     "_id": ""
   },
   {

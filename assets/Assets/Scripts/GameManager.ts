@@ -1,5 +1,8 @@
-import { _decorator, Component, Node, instantiate, Prefab } from 'cc';
+import { _decorator, Component, Node, instantiate, Prefab, Vec2, Vec3 } from 'cc';
 import { CarController } from './CarController';
+import { Tools } from './Utils/Tools';
+import { ScreenManager } from './ScreenManager';
+import { AICarController } from './AICarController';
 
 const { ccclass, property, executionOrder } = _decorator;
 
@@ -16,7 +19,9 @@ export class GameManager extends Component {
     }
 
     @property(Prefab)
-    carPrefab: Prefab | null = null;
+    playerCarPrefab: Prefab | null = null;
+    @property(Prefab)
+    AICarPrefab: Prefab | null = null;
     @property(Node)
     playerCar: Node | null = null;
     @property()
@@ -24,6 +29,8 @@ export class GameManager extends Component {
     @property(Node)
     playerSpawnPoint: Node | null = null;
 
+    @property
+    AICount: number = 5;
 
     onLoad() {
         if (GameManager._instance) {
@@ -37,13 +44,14 @@ export class GameManager extends Component {
     }
 
     start() {
+        this.spawnAI();
         
     }
 
     private spawnPlayerCar() {
-        if (!this.carPrefab || !this.playerSpawnPoint) return;
+        if (!this.playerCarPrefab || !this.playerSpawnPoint) return;
 
-        const playerCar = instantiate(this.carPrefab);
+        const playerCar = instantiate(this.playerCarPrefab);
         playerCar.setParent(this.node);
         playerCar.setWorldPosition(this.playerSpawnPoint.worldPosition);
         this.playerCar = playerCar;
@@ -52,6 +60,17 @@ export class GameManager extends Component {
         if (carController) {
             carController.SetLocalPlayer(true);
             this.playerCarController = carController;
+        }
+    }
+
+    private spawnAI(){
+        for (let index = 0; index < this.AICount; index++) {
+            let spawnPoint = Tools.RandomPositionInRect(ScreenManager.instance.battleArea);
+            let direction = new Vec2(Tools.RandomRange(-1,1,true), Tools.RandomRange(-1,1,true)).normalize();
+            const AICar = instantiate(this.AICarPrefab);
+            AICar.setParent(this.node);
+            AICar.setPosition(new Vec3(spawnPoint.x, spawnPoint.y));
+            AICar.getComponent(AICarController).curMomentumDirection = direction;
         }
     }
     public calculatePointDiffRate(selfPoint: number, enemyPoint: number): number{
