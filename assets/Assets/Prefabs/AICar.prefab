@@ -708,7 +708,7 @@
     "_allowSleep": false,
     "_gravityScale": 0,
     "_linearDamping": 3,
-    "_angularDamping": 150,
+    "_angularDamping": 100,
     "_linearVelocity": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -735,7 +735,7 @@
     },
     "maxCapturingInSeconds": 3,
     "minCapturingInSeconds": 1,
-    "pushBackForce": 1200,
+    "pushBackForce": 25,
     "stunDuration": 1,
     "collisionCooldown": 0.1,
     "frontCar": {

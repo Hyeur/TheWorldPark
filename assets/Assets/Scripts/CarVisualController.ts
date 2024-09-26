@@ -3,14 +3,14 @@ const { ccclass, property } = _decorator;
 
 @ccclass('CarVisualController')
 export class CarVisualController extends Component {
-    @property
+    @property(Sprite)
     carTexture: Sprite = null;
-    @property
+    @property(Sprite)
     magnetTexture: Sprite = null;
 
     magnetTextureOpacity: UIOpacity = null;
     start() {
-        this.node.getComponent(UIOpacity);
+    
     }
 
     update(deltaTime: number) {

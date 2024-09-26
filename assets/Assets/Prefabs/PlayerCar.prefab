@@ -167,7 +167,7 @@
       "__id__": 2
     },
     "_children": [],
-    "_active": false,
+    "_active": true,
     "_components": [
       {
         "__id__": 4
@@ -400,9 +400,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 255,
-      "b": 255,
+      "r": 252,
+      "g": 252,
+      "b": 252,
       "a": 255
     },
     "_spriteFrame": {
@@ -476,8 +476,12 @@
     "__prefab": {
       "__id__": 20
     },
-    "carTexture": null,
-    "magnetTexture": null,
+    "carTexture": {
+      "__id__": 14
+    },
+    "magnetTexture": {
+      "__id__": 6
+    },
     "_id": ""
   },
   {
@@ -1252,14 +1256,14 @@
     "_allowSleep": false,
     "_gravityScale": 0,
     "_linearDamping": 3,
-    "_angularDamping": 1,
+    "_angularDamping": 100,
     "_linearVelocity": {
       "__type__": "cc.Vec2",
       "x": 0,
       "y": 0
     },
     "_angularVelocity": 0,
-    "_fixedRotation": true,
+    "_fixedRotation": false,
     "_id": ""
   },
   {
@@ -1279,7 +1283,7 @@
     },
     "maxCapturingInSeconds": 3,
     "minCapturingInSeconds": 1,
-    "pushBackForce": 1200,
+    "pushBackForce": 25,
     "stunDuration": 1,
     "collisionCooldown": 0.1,
     "frontCar": {

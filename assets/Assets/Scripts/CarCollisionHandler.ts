@@ -1,4 +1,4 @@
-import { _decorator, Component, Contact2DType, IPhysics2DContact, Vec2, tween, RigidBody2D, Vec3, Node, CircleCollider2D, Quat, BoxCollider2D, Collider2D, ECollider2DType, CollisionEventType, ICollisionEvent } from 'cc';
+import { _decorator, Component, Contact2DType, IPhysics2DContact, Vec2, tween, RigidBody2D, Vec3, Node, CircleCollider2D, Quat, BoxCollider2D, Collider2D, ECollider2DType, CollisionEventType, ICollisionEvent, clamp01, clamp } from 'cc';
 import { CarController } from './CarController';
 import { macro } from 'cc';
 import { GameObject, GameObjectType } from './GameObject';
@@ -184,8 +184,8 @@ export class CarCollisionHandler extends Component {
 
             this.rigidbody.linearDamping = 3;
 
-            this.rigidbody.applyForce(new Vec2(-pushDistance.x, -pushDistance.y), selfCenterPoint, true);
-            otherCarHandler?.rigidbody.applyForce(new Vec2(pushDistance.x, pushDistance.y), otherPoint, true);
+            this.rigidbody.applyLinearImpulse(new Vec2(-pushDistance.x, -pushDistance.y), selfCenterPoint, true);
+            otherCarHandler?.rigidbody.applyLinearImpulse(new Vec2(pushDistance.x, pushDistance.y), otherPoint, true);
 
             // Stun both cars
             this.stunCar(this.carController);
@@ -225,9 +225,9 @@ export class CarCollisionHandler extends Component {
         }
 
         if (selfCarStat.curPoint + this._capturingPointPerFrame > 1 && otherCarStat.curPoint + this._capturingPointPerFrame > 1) {
-            console.log("collison staying - packed = :", this._capturingPointPerFrame);
-            selfCarStat.changeCarPoint(this._capturingPointPerFrame, true);
-            otherCarStat.changeCarPoint(-this._capturingPointPerFrame, false);
+            //console.log("collison staying - packed = :", this._capturingPointPerFrame);
+            selfCarStat.changeCarPoint(this._capturingPointPerFrame * Math.sign(selfCarStat.curPoint - otherCarStat.curPoint), true);
+            otherCarStat.changeCarPoint(this._capturingPointPerFrame * Math.sign(selfCarStat.curPoint - otherCarStat.curPoint), false);
         }
     }
     onEndAttackingContactCar(selfCollider: BoxCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null) {

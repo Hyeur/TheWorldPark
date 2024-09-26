@@ -2857,7 +2857,7 @@
     },
     "minBoosterPointGiving": 1,
     "maxBoosterPointGiving": 5,
-    "maxPresentBoosterCount": 1,
+    "maxPresentBoosterCount": 100,
     "respawnIntervalInSeconds": 1,
     "_id": "abCTTv5C9E8q1dBdmA2N8b"
   },
