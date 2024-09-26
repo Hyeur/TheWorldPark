@@ -33,7 +33,16 @@ export class CarStat extends Component {
     changeCarPoint(value: number, roundUP: boolean) {
         let newValue = this._curPoint + value;
         
-        if (newValue < 0 || newValue > this.maxPoint) return;
+        if (newValue < 0){
+            this._curPoint = 0;
+            this.changePointText(this.curPoint)
+            return;
+        }
+        if (newValue > this.maxPoint){
+            this._curPoint = this.maxPoint;
+            this.changePointText(this.curPoint)
+            return;
+        }
         
         this._curPoint += value;
 
@@ -45,7 +54,7 @@ export class CarStat extends Component {
         }
     }
     
-    changePointText(value: number, roundUP:boolean){
+    changePointText(value: number, roundUP:boolean = true){
         if (roundUP)
         {
             value = Math.ceil(value);

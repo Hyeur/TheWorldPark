@@ -49,6 +49,8 @@ export class CarCollisionHandler extends Component {
 
     private attackingValue: number = 0;
 
+    isUnderAttack: boolean = false;
+
     private _deltaTime: number = 0;
 
     private _capturingPointPerFrame: number = 0;
@@ -226,12 +228,28 @@ export class CarCollisionHandler extends Component {
 
         if (selfCarStat.curPoint + this._capturingPointPerFrame > 1 && otherCarStat.curPoint + this._capturingPointPerFrame > 1) {
             //console.log("collison staying - packed = :", this._capturingPointPerFrame);
-            selfCarStat.changeCarPoint(this._capturingPointPerFrame * Math.sign(selfCarStat.curPoint - otherCarStat.curPoint), true);
-            otherCarStat.changeCarPoint(this._capturingPointPerFrame * Math.sign(selfCarStat.curPoint - otherCarStat.curPoint), false);
+            let sign = Math.sign(selfCarStat.curPoint - otherCarStat.curPoint);
+            if (sign == 0) return;
+            if (sign > 0) {
+                otherCarHandler.isUnderAttack = true;
+            }
+            else {
+                this.isUnderAttack = true;
+            }
+            selfCarStat.changeCarPoint(this._capturingPointPerFrame * sign, true);
+            otherCarStat.changeCarPoint(this._capturingPointPerFrame * -sign, false);
         }
     }
     onEndAttackingContactCar(selfCollider: BoxCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null) {
         this._capturingPointPerFrame = 0;
+        let selfCarStat = this.node.getComponent(CarStat);
+        let otherNode = otherCollider.node;
+        let otherCarHandler = otherNode.getComponent(CarCollisionHandler);
+        let otherControler = otherNode.getComponent(CarController);
+        let otherCarStat = otherNode.getComponent(CarStat);
+
+        this.isUnderAttack = false;
+        if (otherCarHandler) otherCarHandler.isUnderAttack = false;
     }
     onEndContactCar(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D) {
         this.isCollisionStaying = false;
@@ -319,6 +337,10 @@ export class CarCollisionHandler extends Component {
     calculatePointCapturingPerFrame(diff: number, diffRate: number, minCapturingInSec: number, maxCapturingInSec: number): number {
         let r = Math.abs(diff) / ((Math.abs(diffRate) + 0.9) * (60 * (maxCapturingInSec - minCapturingInSec)) + (60 * minCapturingInSec));
         return r;
+    }
+
+    getIsUnderAttack(): boolean {
+        return this.isUnderAttack;
     }
 
     onCapturing(selfPoint: number, otherPoint: number) {
