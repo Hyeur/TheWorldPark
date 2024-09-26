@@ -1,47 +1,24 @@
-# Ignore Cocos Creator build files
+
+#///////////////////////////
+# Cocos Creator 3D Project
+#///////////////////////////
 library/
 temp/
 local/
 build/
 profiles/
 native
-
-# Ignore Cocos Creator log files
-*.log
-
-# Ignore generated meta files
-*.meta
-
-# Ignore user-specific settings
-settings.json
-
-# Ignore OS-generated files
-.DS_Store
-Thumbs.db
-
-# Ignore node_modules and package-lock if using npm/yarn
+#//////////////////////////
+# NPM
+#//////////////////////////
 node_modules/
-package-lock.json
-yarn.lock
 
-# Ignore Visual Studio Code settings
+#//////////////////////////
+# VSCode
+#//////////////////////////
 .vscode/
 
-# Ignore CMake build directories if using CMake
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-
-# Ignore macOS system files
-*.DS_Store
-
-# Ignore Windows system files
-*.exe
-*.dll
-*.pdb
-
-# Ignore files created by Xcode (macOS)
-*.xcworkspace
-*.xcuserdata
-*.lock
+#//////////////////////////
+# WebStorm
+#//////////////////////////
+.idea/
