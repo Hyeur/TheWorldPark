@@ -22,7 +22,9 @@ export class CarStat extends Component {
         //debug
         if (this.node.getComponent(CarController).isLocalPlayer)
         {
-            this.changeCarPoint(10, true);
+            console.log(this._curPoint);
+            this._curPoint = 11;
+            this.changePointText(this._curPoint, true);
         }
     }
 

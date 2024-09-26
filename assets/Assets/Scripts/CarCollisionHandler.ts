@@ -71,6 +71,8 @@ export class CarCollisionHandler extends Component {
         // this.waitForCollidersAndEnable();
         // this.fetchCollidersFromInternalComponents();
         this.enableCollisionListeners();
+
+        
     }
 
     private waitForCollidersAndEnable() {
@@ -187,8 +189,9 @@ export class CarCollisionHandler extends Component {
         let otherNode = otherCollider.node;
         let otherCarStat = otherNode.getComponent(CarStat);
 
+        let pointsDiff = GameManager.instance.calculatePointDiff(selfCarStat.curPoint,otherCarStat.curPoint);
         let pointsDiffRate = GameManager.instance.calculatePointDiffRate(selfCarStat.curPoint,otherCarStat.curPoint);
-        this._capturingPointPerFrame = this.calculatePointCapturingPerFrame(pointsDiffRate, this.minCapturingInSeconds, this.maxCapturingInSeconds, this._deltaTime);
+        this._capturingPointPerFrame = this.calculatePointCapturingPerFrame(pointsDiff,pointsDiffRate, this.minCapturingInSeconds, this.maxCapturingInSeconds);
     }
 
     onAttackingContactCar(selfCollider: BoxCollider2D, otherCollider: BoxCollider2D, contact: IPhysics2DContact | null){
@@ -300,11 +303,8 @@ export class CarCollisionHandler extends Component {
         }
     }
 
-    calculatePointCapturingPerFrame(diffRate: number, minCapturingInSec: number, maxCapturingInSec: number, dt?: number): number{
-        let r = (
-                diffRate * (ConstConfig.CARSTAT.DEFAUT_PARAM.maxPoint - ConstConfig.CARSTAT.DEFAUT_PARAM.startingPoint)) /
-                (60 * (diffRate * (maxCapturingInSec - minCapturingInSec) + 1)
-            );
+    calculatePointCapturingPerFrame(diff: number, diffRate:number, minCapturingInSec: number, maxCapturingInSec: number): number{
+        let r = Math.abs(diff) / ((Math.abs(diffRate) + 0.9) * (60 * (maxCapturingInSec - minCapturingInSec)) + (60 * minCapturingInSec));
         return r;
     }
 

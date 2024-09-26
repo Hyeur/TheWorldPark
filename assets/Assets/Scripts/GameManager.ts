@@ -55,8 +55,13 @@ export class GameManager extends Component {
         }
     }
     public calculatePointDiffRate(selfPoint: number, enemyPoint: number): number{
-        return (selfPoint - enemyPoint) / 90;
+        return this.calculatePointDiff( selfPoint, enemyPoint) / 90;
     }
+
+    public calculatePointDiff(selfPoint: number, enemyPoint: number): number{
+        return (selfPoint - enemyPoint);
+    }
+
 
 
 
