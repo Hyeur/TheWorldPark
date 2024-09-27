@@ -1,9 +1,11 @@
-import { _decorator, Component, Vec2, Vec3, input, Input, EventKeyboard, KeyCode, RigidBody2D, clamp01, CircleCollider2D } from 'cc';
+import { _decorator, Component, Vec2, Vec3, input, Input, EventKeyboard, KeyCode, RigidBody2D, clamp01, CircleCollider2D, EventTouch } from 'cc';
 import { SkillManager, Skill } from './SkillManager';
 import { CarCollisionHandler } from './CarCollisionHandler';
 import { Tools } from './Utils/Tools';
 import { CarStat } from './CarStat';
 import { ConstConfig } from './Utils/ConstConfig';
+import { instance, Joystick, SpeedType } from "./Joystick";
+import type { JoystickDataType } from "./Joystick";
 const { ccclass, property } = _decorator;
 
 export enum CarControllerState {
@@ -96,9 +98,27 @@ export class CarController extends Component {
     SetLocalPlayer(value: boolean): void {
         this._isLocalPlayer = value;
     }
+    joystick: Joystick = null;
     onLoad() {
     }
 
+    onEnable() {
+        this.node.on('JoystickMove', this.onTouchMove, this);
+        //input.on(Input.EventType.TOUCH_END, this.onTouchEnd.bind(this), this);
+    }
+
+    onDisable() {
+        input.off(Input.EventType.TOUCH_START, this.onTouchStart.bind(this), this)
+        input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove.bind(this), this);
+        //input.off(Input.EventType.TOUCH_END, this.onTouchEnd.bind(this), this);
+    }
+
+    onTouchStart(){}
+
+    onTouchMove(data: Vec2): void {
+        console.log('data: ', data);
+        // this._curMomentumDirection = new Vec2(data.moveVec.x, data.moveVec.y);
+    }
     start() {
         if (this.isLocalPlayer) {
             this.setupInputListeners();
@@ -109,6 +129,8 @@ export class CarController extends Component {
         this.rigidbody = this.node.getComponent(RigidBody2D);
         this.initializeState();
         this.maxSpeedPower = this.maxSpeed * 1.2;
+
+        
     }
 
     protected setupInputListeners() {
@@ -182,9 +204,7 @@ export class CarController extends Component {
 
         //immortal
 
-        //car move
-        if (this.isLocalPlayer) console.log(curSpeed);
-        
+        //car move        
         const posWS = this.node.getPosition();
         let moveDelta = new Vec2(direction.x, direction.y).multiplyScalar(curSpeed * deltaTime * FORCE_CONSTANT);
         // this.node.setPosition(posWS.add(new Vec3(moveDelta.x, moveDelta.y, 0)));
@@ -223,11 +243,12 @@ export class CarController extends Component {
         }
     }
     update(deltaTime: number) {
+        this.updateCurrentMomentumDirection(deltaTime);
         if (this.isLocalPlayer) {
             this.updateSkillDurations(deltaTime);
+            this.updateCurrentMomentumDirection(deltaTime, this.joystick?.outMove);
         }
 
-        this.updateCurrentMomentumDirection(deltaTime);
         this.updateCurrentSpeed(deltaTime);
         this.applyMovement(deltaTime, this._curMomentumDirection, this._curSpeed);
         this.updateVisual();
@@ -247,18 +268,11 @@ export class CarController extends Component {
         return target.normalize();
     }
 
-    public updateCurrentMomentumDirection(deltaTime: number) {
-        let targetMomentumDirection = this._curMomentumDirection;
-        if (this.isLocalPlayer) {
-            targetMomentumDirection = this.LocalCalculateTargetMomentumDirection();
-        }
-        else {
-            targetMomentumDirection = this._curMomentumDirection;
-        }
-        if (targetMomentumDirection.x !== 0 || targetMomentumDirection.y !== 0) {
+    public updateCurrentMomentumDirection(deltaTime: number, target: Vec2 = this._curMomentumDirection) {
+        if (target.x !== 0 || target.y !== 0) {
             this._curMomentumDirection = new Vec2(
-                this.lerp(this._curMomentumDirection.x, targetMomentumDirection.x, this.rotationLerpSpeed * deltaTime),
-                this.lerp(this._curMomentumDirection.y, targetMomentumDirection.y, this.rotationLerpSpeed * deltaTime)
+                this.lerp(this._curMomentumDirection.x, target.x, this.rotationLerpSpeed * deltaTime),
+                this.lerp(this._curMomentumDirection.y, target.y, this.rotationLerpSpeed * deltaTime)
             );
         }
         else {

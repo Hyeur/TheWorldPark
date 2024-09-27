@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Rect } from 'cc';
+import { _decorator, Component, Node, Rect, director } from 'cc';
 const { ccclass, property,  executionOrder} = _decorator;
 
 @ccclass('ScreenManager')
@@ -21,7 +21,6 @@ export class ScreenManager extends Component {
     start() {
 
     }
-
 }
 
 
